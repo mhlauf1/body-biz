@@ -35,10 +35,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protect dashboard routes - redirect to login if not authenticated
+  // Allow: /login, /api/auth/*, /api/webhooks/*, /payments/success, /payments/cancelled
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/api/auth')
+    !request.nextUrl.pathname.startsWith('/api/auth') &&
+    !request.nextUrl.pathname.startsWith('/api/webhooks') &&
+    !request.nextUrl.pathname.startsWith('/payments/success') &&
+    !request.nextUrl.pathname.startsWith('/payments/cancelled')
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'

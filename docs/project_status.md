@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-**Milestone 4: Reports** (Complete)
+**Milestone 5: Polish** (In Progress)
 
 ## Overall Progress
 
@@ -12,7 +12,7 @@ Milestone 1: Foundation       [==========] 100% ✓
 Milestone 2: Payment Links    [==========] 100% ✓
 Milestone 3: Recharge         [==========] 100% ✓
 Milestone 4: Reports          [==========] 100% ✓
-Milestone 5: Polish           [----------] 0%
+Milestone 5: Polish           [======----] 60%
 ```
 
 ---
@@ -143,10 +143,17 @@ Milestone 5: Polish           [----------] 0%
 
 ### Milestone 5: Polish & Secondary Features
 
-**Status:** Not Started
+**Status:** In Progress (~60%)
 
 | Task                              | Status  |
 | --------------------------------- | ------- |
+| Payment link form UX improvements | Done    |
+| Searchable client selector        | Done    |
+| Inline new client creation        | Done    |
+| Pending links visibility          | Done    |
+| Public payment success/cancelled  | Done    |
+| Login validation improvements     | Done    |
+| Testing documentation             | Done    |
 | Dashboard home with stats         | Pending |
 | Recent activity feed              | Pending |
 | Team management                   | Pending |
@@ -154,7 +161,24 @@ Milestone 5: Polish           [----------] 0%
 | Email confirmations (Resend)      | Pending |
 | Handle failed payments            | Pending |
 | Pause/resume/cancel subscriptions | Pending |
-| Audit logging                     | Pending |
+
+**New files created:**
+
+- `components/ui/SearchableSelect.tsx` - Typeahead/autocomplete select component
+- `components/payments/PendingLinksList.tsx` - Pending payment links list
+- `app/(public)/layout.tsx` - Public routes layout (no auth required)
+- `app/(public)/payments/success/page.tsx` - Client-facing payment success page
+- `app/(public)/payments/cancelled/page.tsx` - Client-facing payment cancelled page
+- `TESTING_OUTLINE.md` - Comprehensive testing guide
+- `scripts/set-user-passwords.js` - Test user password helper
+
+**Files significantly updated:**
+
+- `components/payments/PaymentLinkForm.tsx` - Major UX overhaul
+- `app/api/payments/checkout/route.ts` - Support for inline client creation
+- `components/clients/ClientQuickActions.tsx` - Pending link display
+- `app/(auth)/login/page.tsx` - Profile validation on login
+- `app/(dashboard)/payments/page.tsx` - Added pending links section
 
 ---
 
@@ -172,65 +196,66 @@ Milestone 5: Polish           [----------] 0%
 
 ---
 
-## Latest Work: Milestone 4 - Reports & Commission Tracking
+## Latest Work: Milestone 5 - Polish & UX Improvements
 
 ### What Was Built
 
-The Reports page (`/reports`) provides commission tracking for Kate and Lexie to manage trainer payroll. Access is restricted to admin/manager roles only.
+Major UX improvements to the payment link creation flow and client profile pages, plus infrastructure for client-facing payment pages.
 
-### Capabilities
+### Payment Link Form Overhaul
 
-**Pay Period Support (Semi-Monthly)**
-- First half: 1st - 15th of each month
-- Second half: 16th - end of month
-- Matches the studio's actual payroll schedule
+The payment link form (`/payments/new`) received a complete UX overhaul:
 
-**Date Range Presets**
-| Preset | Description |
-|--------|-------------|
-| Current Pay Period | Auto-detects which half of the month we're in |
-| Previous Pay Period | The pay period before the current one |
-| This Month | Full calendar month |
-| Last 4 Weeks | Rolling 28-day window |
-| This Quarter | Q1/Q2/Q3/Q4 based on current date |
-| This Year | Year-to-date |
-| Custom | Pick any start/end date |
+**New/Existing Client Toggle**
+- Radio buttons to switch between "New Client" and "Existing Client" modes
+- New clients: inline form fields for name, email, phone
+- Existing clients: searchable dropdown with typeahead
 
-**Summary Cards**
-- **Total Revenue** - All purchases in the selected period
-- **Trainer Payouts** - Sum of what trainers are owed (70% for non-admin)
-- **Kate's Income** - Her 30% cut from other trainers' clients
+**SearchableSelect Component**
+- New reusable UI component for client selection
+- Real-time filtering as you type
+- Keyboard navigation (arrow keys, Enter, Escape)
+- Clear button to reset selection
+- Accessible with proper ARIA attributes
 
-**Commission Table**
-- Trainer name with role badge (admin/manager/trainer)
-- Commission rate shown (100% for Kate, 70% for others)
-- Client count per trainer
-- Revenue, Their Commission, Kate's Cut columns
-- Totals row at bottom
-- Sorted by revenue (highest first)
+**Inline Success State**
+- Success view shows generated link directly in form
+- Copy button with visual feedback
+- "Create Another" button to start fresh
+- Details summary (amount, duration, expiration)
 
-**CSV Export**
-- Downloads all data with totals
-- Filename includes period (e.g., `commissions-jan-1-15-2026.csv`)
-- Ready for payroll processing
+### Pending Links Visibility
 
-### Files Created
+- Client profile now shows pending payment links with copy/open actions
+- Payments page has dedicated "Pending Links" section
+- Visual distinction with yellow warning styling
 
-```
-lib/dateRanges.ts                           # Pay period calculations
-app/api/reports/commissions/route.ts        # GET API for report data
-app/(dashboard)/reports/page.tsx            # Reports page
-components/reports/SummaryCards.tsx         # Top stat cards
-components/reports/DateRangeSelector.tsx    # Period picker
-components/reports/CommissionTable.tsx      # Main table with fetching
-components/reports/ExportButton.tsx         # CSV download
-```
+### Public Payment Pages
+
+- Moved success/cancelled pages to `/(public)` route group
+- No authentication required (clients access these after Stripe checkout)
+- Clean, simple design appropriate for client-facing use
+- Clear messaging about payment status
+
+### Login Improvements
+
+- Profile verification after login (checks `public.users` table)
+- User-friendly error messages for common issues
+- Signs out users without valid profiles
+- Handles redirect params for error states
+
+### Testing Infrastructure
+
+- Comprehensive `TESTING_OUTLINE.md` with 68+ test cases
+- Organized by feature area (Auth, Clients, Payments, Reports, etc.)
+- Quick reference for test cards and URLs
+- Bug tracking section for QA
 
 ---
 
-## What's Next: Milestone 5 - Polish
+## What's Next: Remaining Milestone 5 Work
 
-Priority items for final polish:
+Priority items still pending:
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
@@ -342,15 +367,20 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 - None currently
 - MCP servers configured: Stripe, Supabase, Playwright
-- M3 (Recharge) built but needs end-to-end testing
+- See `TESTING_OUTLINE.md` for comprehensive testing guide
 
 ---
 
-## Test User
+## Test Users
 
-- Email: `mhlauf1@gmail.com` (for all roles during development)
-- Will switch to real emails before production
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | mhlauf1@gmail.com | (your password) |
+| Manager | mhlauf1+manager@gmail.com | testpass123 |
+| Trainer | mhlauf1+trainer@gmail.com | testpass123 |
+
+Use `scripts/set-user-passwords.js` to reset test user passwords if needed.
 
 ---
 
-_Last updated: 2026-01-07 (M4 Reports completed)_
+_Last updated: 2026-01-07 (M5 Polish in progress)_

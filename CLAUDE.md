@@ -38,21 +38,29 @@
     /webhooks/stripe  → Stripe webhook handler
     /clients          → Client CRUD
     /payments         → Payment operations
+    /reports          → Commission reports
   /(auth)             → Login pages (outside dashboard layout)
   /(dashboard)        → Main app (auth-protected)
     /clients          → Client management
     /payments         → Payment history & links
     /reports          → Revenue & commission reports
+  /(public)           → Client-facing pages (no auth required)
+    /payments         → Success/cancelled pages after checkout
 /components
-  /ui                 → Shared components (Button, Input, Card, Modal, etc.)
+  /ui                 → Shared components (Button, Input, Card, Modal, SearchableSelect, etc.)
+  /clients            → Client-specific components
+  /payments           → Payment-specific components
+  /reports            → Report-specific components
 /lib
   /supabase.ts        → Supabase client setup
   /stripe.ts          → Stripe client setup
   /utils.ts           → Helpers (formatCurrency, calcCommission)
   /auth.ts            → Auth helpers
+  /dateRanges.ts      → Pay period calculations
 /types
   /database.ts        → Generated Supabase types
 /docs                 → Project documentation
+/scripts              → Utility scripts (password setup, etc.)
 ```
 
 ### User Roles

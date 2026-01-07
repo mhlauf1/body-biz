@@ -1,10 +1,9 @@
-import Link from 'next/link'
-import { Button, Card, CardContent } from '@/components/ui'
+import { Card, CardContent } from '@/components/ui'
 import { CheckCircle } from 'lucide-react'
 
 export default function PaymentSuccessPage() {
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-lg px-4">
       <Card>
         <CardContent className="py-12 text-center">
           <div className="flex justify-center">
@@ -21,14 +20,9 @@ export default function PaymentSuccessPage() {
             Thank you for your payment. Your subscription is now active.
           </p>
 
-          <div className="mt-8 flex justify-center gap-3">
-            <Link href="/payments">
-              <Button variant="secondary">View Payments</Button>
-            </Link>
-            <Link href="/">
-              <Button>Go to Dashboard</Button>
-            </Link>
-          </div>
+          <p className="mt-6 text-sm text-gray-500">
+            You can safely close this window.
+          </p>
         </CardContent>
       </Card>
     </div>

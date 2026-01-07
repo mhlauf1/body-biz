@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Input, Select, Card, CardContent, CardFooter } from '@/components/ui'
+import { Button, Input, Select, SearchableSelect, Card, CardContent, CardFooter } from '@/components/ui'
 import { formatCurrency } from '@/lib/utils'
 import type { User, Client, Program } from '@/types'
 
@@ -21,6 +21,8 @@ interface PaymentLinkFormProps {
 
 interface FormErrors {
   client_id?: string
+  new_client_name?: string
+  new_client_email?: string
   trainer_id?: string
   program_id?: string
   amount?: string
@@ -42,7 +44,20 @@ export function PaymentLinkForm({
   const [generatedLink, setGeneratedLink] = useState<{
     url: string
     expiresAt: string
+    clientName?: string
   } | null>(null)
+
+  // Client mode: existing (select from dropdown) or new (enter details)
+  const [clientMode, setClientMode] = useState<'existing' | 'new'>(
+    preselectedClientId ? 'existing' : 'new'
+  )
+
+  // New client fields
+  const [newClient, setNewClient] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  })
 
   const [formData, setFormData] = useState({
     client_id: preselectedClientId || '',
@@ -52,7 +67,6 @@ export function PaymentLinkForm({
     amount: '',
     duration_months: '',
     is_recurring: true,
-    expires_days: '7',
   })
 
   // Auto-fill amount and duration when program is selected
@@ -110,19 +124,23 @@ export function PaymentLinkForm({
     { value: '12', label: '12 months' },
   ]
 
-  const expiresOptions = [
-    { value: '1', label: '1 day' },
-    { value: '3', label: '3 days' },
-    { value: '7', label: '7 days' },
-    { value: '14', label: '14 days' },
-    { value: '30', label: '30 days' },
-  ]
-
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
-    if (!formData.client_id) {
-      newErrors.client_id = 'Client is required'
+    // Validate client based on mode
+    if (clientMode === 'existing') {
+      if (!formData.client_id) {
+        newErrors.client_id = 'Please select a client'
+      }
+    } else {
+      if (!newClient.name.trim()) {
+        newErrors.new_client_name = 'Client name is required'
+      }
+      if (!newClient.email.trim()) {
+        newErrors.new_client_email = 'Client email is required'
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newClient.email)) {
+        newErrors.new_client_email = 'Please enter a valid email'
+      }
     }
 
     if (!formData.trainer_id) {
@@ -146,19 +164,30 @@ export function PaymentLinkForm({
     setIsLoading(true)
 
     try {
+      // Build request body based on client mode
+      const requestBody: Record<string, unknown> = {
+        trainer_id: formData.trainer_id,
+        program_id: formData.program_id && formData.program_id !== 'custom' ? formData.program_id : undefined,
+        custom_program_name: formData.program_id === 'custom' ? formData.custom_program_name : undefined,
+        amount: parseFloat(formData.amount),
+        duration_months: formData.duration_months ? parseInt(formData.duration_months) : undefined,
+        is_recurring: formData.is_recurring,
+      }
+
+      if (clientMode === 'existing') {
+        requestBody.client_id = formData.client_id
+      } else {
+        requestBody.new_client = {
+          name: newClient.name.trim(),
+          email: newClient.email.trim(),
+          phone: newClient.phone.trim() || undefined,
+        }
+      }
+
       const response = await fetch('/api/payments/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: formData.client_id,
-          trainer_id: formData.trainer_id,
-          program_id: formData.program_id && formData.program_id !== 'custom' ? formData.program_id : undefined,
-          custom_program_name: formData.program_id === 'custom' ? formData.custom_program_name : undefined,
-          amount: parseFloat(formData.amount),
-          duration_months: formData.duration_months ? parseInt(formData.duration_months) : undefined,
-          is_recurring: formData.is_recurring,
-          expires_days: parseInt(formData.expires_days),
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await response.json()
@@ -168,10 +197,16 @@ export function PaymentLinkForm({
         return
       }
 
+      // Determine client name for success message
+      const clientName = clientMode === 'existing'
+        ? clients.find((c) => c.id === formData.client_id)?.name
+        : newClient.name
+
       // Show success with generated link
       setGeneratedLink({
         url: data.url,
         expiresAt: data.expires_at,
+        clientName,
       })
     } catch (error) {
       console.error('Error creating payment link:', error)
@@ -200,7 +235,6 @@ export function PaymentLinkForm({
 
   // Success state - show generated link
   if (generatedLink) {
-    const selectedClient = clients.find((c) => c.id === formData.client_id)
     return (
       <Card>
         <CardContent className="space-y-4 pt-6">
@@ -227,7 +261,7 @@ export function PaymentLinkForm({
           </h2>
 
           <p className="text-center text-sm text-gray-600">
-            Send this link to {selectedClient?.name}:
+            Send this link to {generatedLink.clientName}:
           </p>
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
@@ -243,6 +277,8 @@ export function PaymentLinkForm({
             <Button
               onClick={() => {
                 setGeneratedLink(null)
+                setClientMode('new')
+                setNewClient({ name: '', email: '', phone: '' })
                 setFormData({
                   client_id: '',
                   trainer_id: currentUser.id,
@@ -251,7 +287,6 @@ export function PaymentLinkForm({
                   amount: '',
                   duration_months: '',
                   is_recurring: true,
-                  expires_days: '7',
                 })
               }}
             >
@@ -276,8 +311,8 @@ export function PaymentLinkForm({
                 </div>
               )}
               <div className="flex justify-between">
-                <dt>Expires:</dt>
-                <dd>{new Date(generatedLink.expiresAt).toLocaleDateString()}</dd>
+                <dt>Link expires:</dt>
+                <dd>In 24 hours</dd>
               </div>
             </dl>
           </div>
@@ -301,16 +336,111 @@ export function PaymentLinkForm({
             </div>
           )}
 
-          <Select
-            label="Client *"
-            id="client_id"
-            name="client_id"
-            options={clientOptions}
-            value={formData.client_id}
-            onChange={handleChange}
-            error={errors.client_id}
-            placeholder="Select a client..."
-          />
+          {/* Client Mode Toggle */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Client *
+            </label>
+            <div className="mb-3 flex gap-4">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="clientMode"
+                  checked={clientMode === 'new'}
+                  onChange={() => {
+                    setClientMode('new')
+                    setFormData((prev) => ({ ...prev, client_id: '' }))
+                    setErrors((prev) => ({ ...prev, client_id: undefined }))
+                  }}
+                  className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-700">New Client</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="clientMode"
+                  checked={clientMode === 'existing'}
+                  onChange={() => {
+                    setClientMode('existing')
+                    setNewClient({ name: '', email: '', phone: '' })
+                    setErrors((prev) => ({
+                      ...prev,
+                      new_client_name: undefined,
+                      new_client_email: undefined,
+                    }))
+                  }}
+                  className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-700">Existing Client</span>
+              </label>
+            </div>
+
+            {/* Existing Client - Searchable Select */}
+            {clientMode === 'existing' && (
+              <SearchableSelect
+                id="client_id"
+                name="client_id"
+                options={clientOptions}
+                value={formData.client_id}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, client_id: value }))
+                  if (errors.client_id) {
+                    setErrors((prev) => ({ ...prev, client_id: undefined }))
+                  }
+                }}
+                placeholder="Search clients..."
+                error={errors.client_id}
+                noResultsText="No clients found"
+              />
+            )}
+
+            {/* New Client - Input Fields */}
+            {clientMode === 'new' && (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Input
+                  label="Name"
+                  id="new_client_name"
+                  name="new_client_name"
+                  value={newClient.name}
+                  onChange={(e) => {
+                    setNewClient((prev) => ({ ...prev, name: e.target.value }))
+                    if (errors.new_client_name) {
+                      setErrors((prev) => ({ ...prev, new_client_name: undefined }))
+                    }
+                  }}
+                  error={errors.new_client_name}
+                  placeholder="John Smith"
+                />
+                <Input
+                  label="Email"
+                  id="new_client_email"
+                  name="new_client_email"
+                  type="email"
+                  value={newClient.email}
+                  onChange={(e) => {
+                    setNewClient((prev) => ({ ...prev, email: e.target.value }))
+                    if (errors.new_client_email) {
+                      setErrors((prev) => ({ ...prev, new_client_email: undefined }))
+                    }
+                  }}
+                  error={errors.new_client_email}
+                  placeholder="john@email.com"
+                />
+                <Input
+                  label="Phone"
+                  id="new_client_phone"
+                  name="new_client_phone"
+                  type="tel"
+                  value={newClient.phone}
+                  onChange={(e) => {
+                    setNewClient((prev) => ({ ...prev, phone: e.target.value }))
+                  }}
+                  placeholder="(555) 555-5555"
+                />
+              </div>
+            )}
+          </div>
 
           {isAdminOrManager && (
             <Select
@@ -382,15 +512,6 @@ export function PaymentLinkForm({
               onChange={handleChange}
             />
           )}
-
-          <Select
-            label="Link Expires After"
-            id="expires_days"
-            name="expires_days"
-            options={expiresOptions}
-            value={formData.expires_days}
-            onChange={handleChange}
-          />
 
           {formData.amount && (
             <div className="rounded-lg bg-gray-50 p-4">

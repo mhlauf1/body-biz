@@ -59,6 +59,22 @@ export default async function ClientProfilePage({ params }: PageParams) {
     .eq('is_active', true)
     .order('name')
 
+  // Check for any pending payment links for this client
+  const { data: pendingLinks } = await supabase
+    .from('payment_links')
+    .select(`
+      id,
+      url,
+      expires_at,
+      purchase:purchases!inner(client_id, amount, program:programs(name))
+    `)
+    .eq('status', 'active')
+    .eq('purchase.client_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const pendingLink = pendingLinks?.[0] || null
+
   const statusVariants: Record<string, 'success' | 'warning' | 'error' | 'default' | 'info'> = {
     active: 'success',
     pending: 'warning',
@@ -88,7 +104,11 @@ export default async function ClientProfilePage({ params }: PageParams) {
       />
 
       {/* Quick Actions */}
-      <ClientQuickActions client={client} programs={programs || []} />
+      <ClientQuickActions
+        client={client}
+        programs={programs || []}
+        pendingLink={pendingLink}
+      />
 
       {/* Purchase History */}
       <Card>

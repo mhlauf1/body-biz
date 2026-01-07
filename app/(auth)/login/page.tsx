@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button, Input, Card, CardContent, CardHeader } from '@/components/ui'
 
@@ -9,26 +10,57 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const searchParams = useSearchParams()
 
   const supabase = createClient()
+
+  // Check for error params (e.g., when redirected back after failed profile lookup)
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'profile_not_found') {
+      setError('Your account is not fully set up. Please contact your administrator.')
+    }
+  }, [searchParams])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) {
-      setError(error.message)
+    if (authError) {
+      // Map common errors to user-friendly messages
+      if (authError.message === 'Invalid login credentials') {
+        setError('Invalid email or password. Please try again.')
+      } else {
+        setError(authError.message)
+      }
       setIsLoading(false)
       return
     }
 
-    // Redirect handled by middleware
+    // Check if user profile exists in public.users table
+    if (data.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileError || !profile) {
+        setError('Your account is not fully set up. Please contact your administrator.')
+        // Sign out since they can\'t use the app without a profile
+        await supabase.auth.signOut()
+        setIsLoading(false)
+        return
+      }
+    }
+
+    // Redirect to dashboard
     window.location.href = '/'
   }
 

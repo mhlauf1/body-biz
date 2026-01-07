@@ -17,11 +17,17 @@ export async function getCurrentUser(): Promise<User | null> {
 
   if (!authUser) return null
 
-  const { data: user } = await supabase
+  const { data: user, error } = await supabase
     .from('users')
     .select('*')
     .eq('id', authUser.id)
     .single()
+
+  if (error) {
+    console.error('Error fetching user profile:', error.message, 'Auth ID:', authUser.id)
+    // User exists in auth but not in public.users table
+    return null
+  }
 
   return user
 }

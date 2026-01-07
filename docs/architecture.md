@@ -201,22 +201,32 @@ Staff                    Next.js                   Stripe                    Sup
 │   ├── [id]/page.tsx   # Client profile
 │   └── new/page.tsx    # Add client form
 ├── /payments
-│   ├── page.tsx        # Payment history
-│   └── new-link/page.tsx # Create payment link
+│   ├── page.tsx        # Payment history + pending links
+│   └── new/page.tsx    # Create payment link
 └── /reports
     └── page.tsx        # Revenue & commission reports
+
+/(public)               # No auth required
+├── layout.tsx          # Simple centered layout
+└── /payments
+    ├── success/page.tsx   # Client-facing success page
+    └── cancelled/page.tsx # Client-facing cancelled page
+
+/(auth)
+└── /login
+    └── page.tsx        # Login with profile validation
 ```
 
 ### UI Components (Client Components where needed)
 
 ```
 /components/ui
-├── Button.tsx          # Primary, secondary, danger variants
+├── Button.tsx          # Primary, secondary, danger, ghost variants
 ├── Input.tsx           # Text, email, number inputs
 ├── Select.tsx          # Dropdown select
+├── SearchableSelect.tsx # Typeahead/autocomplete select
 ├── Card.tsx            # Content container
 ├── Modal.tsx           # Dialog overlay
-├── Table.tsx           # Data table with sorting
 ├── Badge.tsx           # Status indicators
 └── Spinner.tsx         # Loading indicator
 ```
@@ -320,4 +330,4 @@ const event = stripe.webhooks.constructEvent(
 
 ---
 
-*Last updated: 2025-01-06*
+*Last updated: 2026-01-07*

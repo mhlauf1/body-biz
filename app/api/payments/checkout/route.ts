@@ -6,16 +6,27 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { UserRole } from '@/types'
 
+// Schema for new client creation
+const newClientSchema = z.object({
+  name: z.string().min(1, 'Client name is required'),
+  email: z.string().email('Valid email is required'),
+  phone: z.string().optional(),
+})
+
 const checkoutSchema = z.object({
-  client_id: z.string().uuid('Valid client ID is required'),
+  // Either client_id OR new_client is required (validated with refine below)
+  client_id: z.string().uuid('Valid client ID is required').optional(),
+  new_client: newClientSchema.optional(),
   program_id: z.string().uuid('Valid program ID is required').optional(),
   custom_program_name: z.string().optional(),
   trainer_id: z.string().uuid('Valid trainer ID is required'),
   amount: z.number().positive('Amount must be positive'),
   duration_months: z.number().int().positive().optional(), // null for one-time or ongoing
   is_recurring: z.boolean().default(true),
-  expires_days: z.number().int().min(1).max(30).default(7),
-})
+}).refine(
+  (data) => data.client_id || data.new_client,
+  { message: 'Either client_id or new_client is required' }
+)
 
 /**
  * POST /api/payments/checkout
@@ -39,32 +50,75 @@ export async function POST(request: Request) {
     }
 
     const {
-      client_id,
+      client_id: providedClientId,
+      new_client,
       program_id,
       custom_program_name,
       trainer_id,
       amount,
       duration_months,
       is_recurring,
-      expires_days,
     } = validation.data
 
     const supabase = await createClient()
 
-    // Verify client exists and user has access
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', client_id)
-      .single()
+    let client_id = providedClientId
+    let client: { id: string; email: string; name: string; stripe_customer_id?: string | null } | null = null
 
-    if (clientError || !client) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
-    }
+    // Handle new client creation
+    if (new_client) {
+      // Check if client with this email already exists
+      const { data: existingClient } = await supabase
+        .from('clients')
+        .select('id, email, name')
+        .eq('email', new_client.email)
+        .single()
 
-    // Trainers can only create links for their own clients
-    if (!isAdminOrManager(user) && client.assigned_trainer_id !== user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      if (existingClient) {
+        return NextResponse.json(
+          { error: `A client with email ${new_client.email} already exists` },
+          { status: 400 }
+        )
+      }
+
+      // Create the new client
+      const { data: createdClient, error: createError } = await supabase
+        .from('clients')
+        .insert({
+          name: new_client.name,
+          email: new_client.email,
+          phone: new_client.phone || null,
+          assigned_trainer_id: trainer_id,
+          is_active: true,
+        })
+        .select('id, email, name, stripe_customer_id')
+        .single()
+
+      if (createError || !createdClient) {
+        console.error('Error creating client:', createError)
+        return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
+      }
+
+      client = createdClient
+      client_id = createdClient.id
+    } else {
+      // Verify existing client exists and user has access
+      const { data: existingClient, error: clientError } = await supabase
+        .from('clients')
+        .select('id, email, name, stripe_customer_id, assigned_trainer_id')
+        .eq('id', client_id)
+        .single()
+
+      if (clientError || !existingClient) {
+        return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+      }
+
+      // Trainers can only create links for their own clients
+      if (!isAdminOrManager(user) && existingClient.assigned_trainer_id !== user.id) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+
+      client = existingClient
     }
 
     // Get trainer info for commission calculation
@@ -158,7 +212,8 @@ export async function POST(request: Request) {
 
     // Create Stripe Checkout Session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const expiresAt = Math.floor(Date.now() / 1000) + expires_days * 24 * 60 * 60
+    // Stripe sessions expire after 24 hours by default (max allowed)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessionConfig: any = {
@@ -172,7 +227,7 @@ export async function POST(request: Request) {
       },
       success_url: `${appUrl}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/payments/cancelled`,
-      expires_at: expiresAt,
+      // Note: Not setting expires_at - Stripe uses 24h default
     }
 
     // Add subscription data for recurring payments
@@ -210,7 +265,7 @@ export async function POST(request: Request) {
         url: session.url!,
         stripe_checkout_session_id: session.id,
         status: 'active',
-        expires_at: new Date(expiresAt * 1000).toISOString(),
+        expires_at: expiresAt.toISOString(),
         created_by: user.id,
       })
       .select()
@@ -247,7 +302,7 @@ export async function POST(request: Request) {
       url: session.url,
       session_id: session.id,
       purchase_id: purchase.id,
-      expires_at: new Date(expiresAt * 1000).toISOString(),
+      expires_at: expiresAt.toISOString(),
     })
   } catch (error) {
     console.error('Error in POST /api/payments/checkout:', error)

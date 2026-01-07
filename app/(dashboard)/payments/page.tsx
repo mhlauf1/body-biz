@@ -2,8 +2,9 @@ import { requireAuth, isAdminOrManager } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Button, Card, CardContent, CardHeader, Badge } from '@/components/ui'
-import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils'
-import { Plus, ExternalLink, Copy } from 'lucide-react'
+import { PendingLinksList } from '@/components/payments/PendingLinksList'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { Plus } from 'lucide-react'
 
 export default async function PaymentsPage() {
   const user = await requireAuth()
@@ -81,53 +82,7 @@ export default async function PaymentsPage() {
       </div>
 
       {/* Pending Links */}
-      {filteredLinks && filteredLinks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold">
-              Pending Links ({filteredLinks.length})
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {filteredLinks.map((link) => (
-                <div
-                  key={link.id}
-                  className="flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50 p-4"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {link.purchase?.client?.name || 'Unknown Client'}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {link.purchase?.program?.name || 'Custom'} -{' '}
-                      {formatCurrency(link.purchase?.amount || 0)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Expires {link.expires_at && formatRelativeTime(new Date(link.expires_at))}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigator.clipboard.writeText(link.url)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <a href={link.url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="secondary" size="sm">
-                        <ExternalLink className="mr-1 h-4 w-4" />
-                        Open
-                      </Button>
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <PendingLinksList links={filteredLinks || []} />
 
       {/* Recent Transactions */}
       <Card>

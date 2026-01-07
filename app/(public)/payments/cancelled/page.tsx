@@ -1,10 +1,9 @@
-import Link from 'next/link'
-import { Button, Card, CardContent } from '@/components/ui'
+import { Card, CardContent } from '@/components/ui'
 import { XCircle } from 'lucide-react'
 
 export default function PaymentCancelledPage() {
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-lg px-4">
       <Card>
         <CardContent className="py-12 text-center">
           <div className="flex justify-center">
@@ -22,17 +21,12 @@ export default function PaymentCancelledPage() {
           </p>
 
           <p className="mt-4 text-sm text-gray-500">
-            If you have any questions, please contact your trainer.
+            If you&apos;d like to try again, please request a new payment link from your trainer.
           </p>
 
-          <div className="mt-8 flex justify-center gap-3">
-            <Link href="/payments">
-              <Button variant="secondary">Back to Payments</Button>
-            </Link>
-            <Link href="/">
-              <Button>Go to Dashboard</Button>
-            </Link>
-          </div>
+          <p className="mt-6 text-sm text-gray-500">
+            You can safely close this window.
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button, Input, Select, Card, CardContent, CardFooter } from '@/components/ui'
+import { AlertCircle } from 'lucide-react'
 import type { User, Client } from '@/types'
 
 interface ClientFormProps {
@@ -31,7 +33,11 @@ export function ClientForm({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState<{ message: string; type?: 'duplicate_email' | 'error' } | null>(null)
+
+  // Refs for auto-focusing error fields
+  const nameRef = useRef<HTMLInputElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
     name: client?.name || '',
@@ -63,12 +69,20 @@ export function ClientForm({
     }
 
     setErrors(newErrors)
+
+    // Focus on first error field
+    if (newErrors.name) {
+      nameRef.current?.focus()
+    } else if (newErrors.email) {
+      emailRef.current?.focus()
+    }
+
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setServerError('')
+    setServerError(null)
 
     if (!validateForm()) return
 
@@ -93,7 +107,23 @@ export function ClientForm({
       const data = await response.json()
 
       if (!response.ok) {
-        setServerError(data.error || 'Something went wrong')
+        // Handle specific error types
+        if (response.status === 409) {
+          // Duplicate email
+          setServerError({ message: 'A client with this email already exists.', type: 'duplicate_email' })
+          setErrors((prev) => ({ ...prev, email: 'This email is already in use' }))
+          emailRef.current?.focus()
+        } else if (response.status === 400 && data.error?.includes('email')) {
+          // Email validation error
+          setErrors((prev) => ({ ...prev, email: data.error }))
+          emailRef.current?.focus()
+        } else if (response.status === 400 && data.error?.includes('Name')) {
+          // Name validation error
+          setErrors((prev) => ({ ...prev, name: data.error }))
+          nameRef.current?.focus()
+        } else {
+          setServerError({ message: data.error || 'Something went wrong. Please try again.' })
+        }
         return
       }
 
@@ -102,7 +132,7 @@ export function ClientForm({
       router.refresh()
     } catch (error) {
       console.error('Error submitting form:', error)
-      setServerError('An unexpected error occurred')
+      setServerError({ message: 'Unable to connect. Please check your internet connection and try again.' })
     } finally {
       setIsLoading(false)
     }
@@ -117,6 +147,10 @@ export function ClientForm({
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
+    // Clear server error when user makes changes
+    if (serverError) {
+      setServerError(null)
+    }
   }
 
   return (
@@ -124,12 +158,25 @@ export function ClientForm({
       <Card>
         <CardContent className="space-y-4 pt-6">
           {serverError && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
-              {serverError}
+            <div className="rounded-lg bg-red-50 p-4 text-sm">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-red-700 font-medium">{serverError.message}</p>
+                  {serverError.type === 'duplicate_email' && (
+                    <p className="mt-1 text-red-600">
+                      <Link href={`/clients?search=${encodeURIComponent(formData.email)}`} className="underline hover:no-underline">
+                        Search for existing client
+                      </Link>
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           <Input
+            ref={nameRef}
             label="Name *"
             id="name"
             name="name"
@@ -140,6 +187,7 @@ export function ClientForm({
           />
 
           <Input
+            ref={emailRef}
             label="Email *"
             id="email"
             name="email"

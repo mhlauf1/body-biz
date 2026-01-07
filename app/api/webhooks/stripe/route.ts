@@ -151,13 +151,22 @@ async function handleCheckoutSessionCompleted(session: any) {
 
 /**
  * Handle invoice.paid
- * Logs successful subscription payments
+ * Logs successful subscription renewal payments
+ * Note: First invoice (subscription_create) is handled by checkout.session.completed
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleInvoicePaid(invoice: any) {
   const subscriptionId = invoice.subscription as string | null
+  const billingReason = invoice.billing_reason as string | null
 
   if (!subscriptionId) return
+
+  // Skip first invoice - it's handled by checkout.session.completed
+  // Only process subscription renewals (subscription_cycle) and updates
+  if (billingReason === 'subscription_create') {
+    console.log(`Skipping first invoice for subscription ${subscriptionId} (handled by checkout.session.completed)`)
+    return
+  }
 
   // Find purchase by subscription ID
   const { data: purchase } = await supabaseAdmin
@@ -171,21 +180,31 @@ async function handleInvoicePaid(invoice: any) {
     return
   }
 
-  // Log the successful payment
+  // Get client info for logging
+  const { data: client } = await supabaseAdmin
+    .from('clients')
+    .select('name, email')
+    .eq('id', purchase.client_id)
+    .single()
+
+  // Log the successful renewal payment
   await supabaseAdmin.from('audit_log').insert({
-    action: 'invoice_paid',
+    action: 'subscription_renewed',
     entity_type: 'purchase',
     entity_id: purchase.id,
     details: {
       invoice_id: invoice.id,
       subscription_id: subscriptionId,
+      billing_reason: billingReason,
       amount_paid: invoice.amount_paid,
       period_start: invoice.period_start,
       period_end: invoice.period_end,
+      client_name: client?.name,
+      client_email: client?.email,
     },
   })
 
-  console.log(`Invoice paid for subscription ${subscriptionId}`)
+  console.log(`Subscription renewal processed for ${client?.name || purchase.client_id} - ${subscriptionId}`)
 }
 
 /**

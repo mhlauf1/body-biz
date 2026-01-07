@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ClientCard } from '@/components/clients/ClientCard'
-import { Button, Card, CardContent, CardHeader, Badge } from '@/components/ui'
+import { ClientQuickActions } from '@/components/clients/ClientQuickActions'
+import { Card, CardContent, CardHeader, Badge } from '@/components/ui'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { ArrowLeft, CreditCard, Link as LinkIcon } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 type PageParams = { params: Promise<{ id: string }> }
 
@@ -51,6 +52,13 @@ export default async function ClientProfilePage({ params }: PageParams) {
     .eq('is_active', true)
     .order('name')
 
+  // Get programs for charge modal
+  const { data: programs } = await supabase
+    .from('programs')
+    .select('*')
+    .eq('is_active', true)
+    .order('name')
+
   const statusVariants: Record<string, 'success' | 'warning' | 'error' | 'default' | 'info'> = {
     active: 'success',
     pending: 'warning',
@@ -80,34 +88,7 @@ export default async function ClientProfilePage({ params }: PageParams) {
       />
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">Quick Actions</h3>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            {client.stripe_customer_id ? (
-              <Button>
-                <CreditCard className="mr-2 h-4 w-4" />
-                New Charge
-              </Button>
-            ) : (
-              <Link href={`/payments/new?client_id=${client.id}`}>
-                <Button>
-                  <LinkIcon className="mr-2 h-4 w-4" />
-                  Send Payment Link
-                </Button>
-              </Link>
-            )}
-            <Link href={`/payments/new?client_id=${client.id}`}>
-              <Button variant="secondary">
-                <LinkIcon className="mr-2 h-4 w-4" />
-                Create Payment Link
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <ClientQuickActions client={client} programs={programs || []} />
 
       {/* Purchase History */}
       <Card>

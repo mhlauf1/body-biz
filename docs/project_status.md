@@ -1,13 +1,13 @@
 # Project Status
 
 ## Current Phase
-**Milestone 1: Foundation & Database** (Ready to Start)
+**Milestone 2: Client Management + Payment Links** (Complete)
 
 ## Overall Progress
 ```
 Milestone 0: Setup & Docs     [==========] 100% ✓
-Milestone 1: Foundation       [----------] 0%
-Milestone 2: Payment Links    [----------] 0%
+Milestone 1: Foundation       [==========] 100% ✓
+Milestone 2: Payment Links    [==========] 100% ✓
 Milestone 3: Recharge         [----------] 0%
 Milestone 4: Client Profile   [----------] 0%
 Milestone 5: Reports          [----------] 0%
@@ -36,38 +36,56 @@ Milestone 6: Polish           [----------] 0%
 ---
 
 ### Milestone 1: Foundation & Database
-**Status:** Not Started
+**Status:** Complete
 
 | Task | Status |
 |------|--------|
-| Create Supabase database schema | Pending |
-| Generate TypeScript types | Pending |
-| Set up Supabase client helpers | Pending |
-| Set up Stripe client | Pending |
-| Create utility functions | Pending |
-| Build base UI components | Pending |
-| Create auth pages (login) | Pending |
-| Create dashboard layout | Pending |
-| Seed initial users | Pending |
-| Seed initial programs | Pending |
+| Create Supabase database schema | Done |
+| Generate TypeScript types | Done |
+| Set up Supabase client helpers | Done |
+| Set up Stripe client | Done |
+| Create utility functions | Done |
+| Build base UI components | Done |
+| Create auth pages (login) | Done |
+| Create dashboard layout | Done |
+| Seed initial users | Done |
+| Seed initial programs | Done |
 
 ---
 
 ### Milestone 2: Client Management + Payment Links
-**Status:** Not Started
+**Status:** Complete
 
 | Task | Status |
 |------|--------|
-| Build client list page | Pending |
-| Build add client form | Pending |
-| Build client profile page | Pending |
-| Create payment link form | Pending |
-| API: Create Stripe Checkout Session | Pending |
-| Store pending purchase + link | Pending |
-| Display generated link | Pending |
-| Stripe webhook handler | Pending |
-| Handle checkout.session.completed | Pending |
-| Commission calculation | Pending |
+| Build client list page | Done |
+| Build add client form | Done |
+| Build client profile page | Done |
+| Create payment link form | Done |
+| API: Create Stripe Checkout Session | Done |
+| Store pending purchase + link | Done |
+| Display generated link | Done |
+| Stripe webhook handler | Done |
+| Handle checkout.session.completed | Done |
+| Commission calculation | Done |
+
+**New files created:**
+- `app/api/clients/route.ts` - Client CRUD API
+- `app/api/clients/[id]/route.ts` - Single client operations
+- `app/api/payments/checkout/route.ts` - Stripe checkout session creation
+- `app/api/programs/route.ts` - Programs listing
+- `app/api/webhooks/stripe/route.ts` - Stripe webhook handler
+- `app/(dashboard)/clients/page.tsx` - Client list page
+- `app/(dashboard)/clients/new/page.tsx` - New client page
+- `app/(dashboard)/clients/[id]/page.tsx` - Client profile page
+- `app/(dashboard)/payments/page.tsx` - Payments overview
+- `app/(dashboard)/payments/new/page.tsx` - Create payment link
+- `app/(dashboard)/payments/success/page.tsx` - Payment success page
+- `app/(dashboard)/payments/cancelled/page.tsx` - Payment cancelled page
+- `components/clients/ClientList.tsx` - Client list component
+- `components/clients/ClientForm.tsx` - Client form component
+- `components/clients/ClientCard.tsx` - Client profile card
+- `components/payments/PaymentLinkForm.tsx` - Payment link form
 
 ---
 
@@ -85,15 +103,15 @@ Milestone 6: Polish           [----------] 0%
 ---
 
 ### Milestone 4: Purchase History & Client Profile
-**Status:** Not Started
+**Status:** Partially Done (merged into M2)
 
 | Task | Status |
 |------|--------|
-| Display purchase history | Pending |
-| Show subscription status | Pending |
-| Notes field (editable) | Pending |
+| Display purchase history | Done |
+| Show subscription status | Done |
+| Notes field (editable) | Done |
 | Show payment methods | Pending |
-| Client edit functionality | Pending |
+| Client edit functionality | Done |
 
 ---
 
@@ -132,8 +150,9 @@ Milestone 6: Polish           [----------] 0%
 |-------|------|
 | Project started | 2025-01-06 |
 | Milestone 0 completed | 2025-01-07 |
-| Milestone 1 target | TBD |
-| Milestone 2 target (Lexie testing) | TBD |
+| Milestone 1 completed | 2025-01-07 |
+| Milestone 2 completed | 2026-01-07 |
+| Milestone 3 target | TBD |
 | MVP complete (Milestone 5) | TBD |
 
 ---
@@ -151,4 +170,4 @@ Milestone 6: Polish           [----------] 0%
 
 ---
 
-*Last updated: 2025-01-07*
+*Last updated: 2026-01-07*

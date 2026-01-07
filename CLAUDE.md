@@ -1,150 +1,271 @@
 # Body Biz Client Management System
 
-## Project Overview
+## Project Goals
 
-Internal dashboard for The Body Biz (Columbus, OH personal training studio) that replaces their janky Foxy.io + Authorize.net + Zapier + Google Sheets setup with a unified Stripe-powered system.
+**What:** Internal dashboard for The Body Biz (Columbus, OH personal training studio)
+**Why:** Replace fragmented Foxy.io + Authorize.net + Zapier + Google Sheets with unified Stripe-powered system
+**Who:** Built by Lauf (lauf.co) for The Body Biz (thebody.biz)
 
-**Client:** The Body Biz (thebody.biz)  
-**Built by:** Lauf (lauf.co)
+### Core Problems We're Solving
+- Recharging existing clients requires new payment links (should be one-click)
+- Commission tracking is manual spreadsheet hell (should be automatic)
+- No client history, duplicate charges happen (need unified client profiles)
+- Zapier automations break constantly (need reliable webhook-based system)
 
-## Problem We're Solving
+### Success Metrics
+- Staff can charge existing clients in <30 seconds
+- Zero manual commission calculations
+- Complete client history in one place
 
-- Kate (owner) and her trainers need to charge clients for custom programs
-- Current system requires new payment links even for existing clients with cards on file
-- Commission tracking is manual spreadsheet hell
-- Zapier automations break constantly
-- No client history, no email confirmations, duplicate charges happen
+---
 
-## Tech Stack
+## Architecture Overview
 
-- **Framework:** Next.js 16 (App Router)
-- **Database:** Supabase (Postgres + Auth + RLS)
-- **Payments:** Stripe (Checkout, Subscriptions, saved cards)
-- **Email:** Resend
-- **Styling:** Tailwind CSS v4
-- **Hosting:** Vercel
+### Tech Stack
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router) |
+| Database | Supabase (Postgres + Auth + RLS) |
+| Payments | Stripe (Checkout, Subscriptions, saved cards) |
+| Email | Resend |
+| Styling | Tailwind CSS v4 |
+| Hosting | Vercel |
 
-## User Roles
+### Folder Structure
+```
+/app
+  /api                → API routes (webhooks, CRUD)
+    /webhooks/stripe  → Stripe webhook handler
+    /clients          → Client CRUD
+    /payments         → Payment operations
+  /(auth)             → Login pages (outside dashboard layout)
+  /(dashboard)        → Main app (auth-protected)
+    /clients          → Client management
+    /payments         → Payment history & links
+    /reports          → Revenue & commission reports
+/components
+  /ui                 → Shared components (Button, Input, Card, Modal, etc.)
+/lib
+  /supabase.ts        → Supabase client setup
+  /stripe.ts          → Stripe client setup
+  /utils.ts           → Helpers (formatCurrency, calcCommission)
+  /auth.ts            → Auth helpers
+/types
+  /database.ts        → Generated Supabase types
+/docs                 → Project documentation
+```
 
-| Role      | Who            | Access                     | Commission                            |
-| --------- | -------------- | -------------------------- | ------------------------------------- |
-| `admin`   | Kate           | Everything                 | 100% own clients, 30% cut from others |
-| `manager` | Lexie          | Everything (same as admin) | 70% (Kate gets 30%)                   |
-| `trainer` | Mattie, others | Own clients only           | 70% (Kate gets 30%)                   |
+### User Roles
+| Role | Who | Access | Commission |
+|------|-----|--------|------------|
+| `admin` | Kate | Everything | 100% own clients, 30% cut from others |
+| `manager` | Lexie | Everything (same as admin) | 70% (Kate gets 30%) |
+| `trainer` | Mattie, others | Own clients only | 70% (Kate gets 30%) |
 
 **Key:** Manager has admin ACCESS but trainer COMMISSION.
 
-## Core Flows
+---
 
-1. **New client checkout:** Create payment link → Client pays via Stripe Checkout → Webhook updates DB → Email sent
-2. **Recharge existing client:** Find client → Select program → Charge saved card → Done
-3. **Commission tracking:** Automatic calculation stored on each purchase
+## Design Style Guide
 
-## Database Tables
+### Visual Style
+- **Aesthetic:** Clean minimal (Stripe-like)
+- **Backgrounds:** White/light gray
+- **Borders:** Subtle gray (`border-gray-200`)
+- **Typography:** Clear hierarchy, system fonts
+- **Shadows:** Minimal, only for elevation (modals, dropdowns)
+- **Colors:**
+  - Primary: Indigo/blue for actions
+  - Success: Green for completed/active states
+  - Warning: Yellow/amber for pending
+  - Error: Red for failures/alerts
 
-- `users` — Staff/trainers with role and commission_rate
-- `clients` — Clients with stripe_customer_id for saved cards
-- `programs` — Templates (3 Month Coaching, Testing Fee, etc.)
-- `purchases` — Actual transactions with commission breakdown
-- `payment_links` — One-time use, auto-expire checkout links
-- `audit_log` — Track all sensitive operations
+### Component Patterns
+- Build all UI components from scratch with Tailwind CSS v4
+- No external component libraries
+- Consistent padding/spacing (use Tailwind's spacing scale)
+- Accessible: proper labels, focus states, ARIA attributes
 
-See `/docs/SPEC.md` for full schema with SQL.
+### UX Guidelines
+- Server Components by default, Client Components only when needed
+- Show loading states for async operations
+- Optimistic updates where appropriate
+- Clear error messages (user-friendly in UI, detailed in logs)
+- Confirm destructive actions (delete, refund, cancel)
 
-## Key Conventions
+---
 
-### File Structure
+## Constraints & Policies
 
-```
-/app
-  /api              → API routes (webhooks, CRUD)
-  /(auth)           → Login pages (outside dashboard layout)
-  /(dashboard)      → Main app (inside auth-protected layout)
-/components
-  /ui               → Shared components (buttons, inputs, etc.)
-/lib
-  /supabase.ts      → Supabase client setup
-  /stripe.ts        → Stripe client setup
-  /utils.ts         → Helpers
-/types
-  /database.ts      → Generated Supabase types
-```
-
-### Code Style
-
-- Use Server Components by default, Client Components only when needed
-- Validate all inputs with Zod
-- Use Supabase RLS for authorization, not just app-level checks
-- Always verify Stripe webhook signatures
-- Log sensitive operations to audit_log
-
-### Naming
-
-- API routes: `/api/clients`, `/api/payments`, `/api/webhooks/stripe`
-- Components: PascalCase (`ClientList.tsx`)
-- Utils: camelCase (`formatCurrency.ts`)
-- Database: snake_case (`stripe_customer_id`)
-
-### Error Handling
-
-- API routes return `{ error: string }` on failure with appropriate status
-- Use try/catch around Stripe and Supabase calls
-- Show user-friendly errors in UI, log details server-side
-
-## Security Rules
-
+### Security (MUST follow)
 - NEVER log full card numbers or Stripe secrets
-- ALWAYS verify webhook signatures before processing
-- ALWAYS use RLS — don't trust client-side role checks alone
+- NEVER commit `.env` files or secrets to git
+- ALWAYS verify Stripe webhook signatures before processing
+- ALWAYS use Supabase RLS — don't trust client-side role checks alone
+- ALWAYS use environment variables for secrets
 - Trainers can only access their own clients (enforced at DB level)
 
-## Commission Logic
+### Code Quality
+- Validate all inputs with Zod
+- Use try/catch around Stripe and Supabase calls
+- API routes return `{ error: string }` on failure with appropriate status
+- Log sensitive operations to `audit_log` table
 
-```typescript
-// When creating a purchase:
-if (trainer.role === "admin") {
-  // Kate keeps 100% of her own clients
-  trainer_commission_rate = 1.0;
-  trainer_amount = amount;
-  owner_amount = 0;
-} else {
-  // Everyone else: 70/30 split
-  trainer_commission_rate = 0.7;
-  trainer_amount = amount * 0.7;
-  owner_amount = amount * 0.3;
-}
+### Naming Conventions
+- API routes: `/api/clients`, `/api/payments`, `/api/webhooks/stripe`
+- Components: PascalCase (`ClientList.tsx`)
+- Utils/hooks: camelCase (`formatCurrency.ts`, `useAuth.ts`)
+- Database: snake_case (`stripe_customer_id`)
+
+---
+
+## Repository Etiquette
+
+### Git Workflow
+- **NEVER push directly to main branch**
+- Create feature branches for all work
+- Open PRs for review before merging
+- Keep commits atomic and well-described
+
+### Branch Naming
+```
+feature/client-list-page
+feature/stripe-webhook-handler
+fix/commission-calculation-bug
+docs/update-architecture
+chore/update-dependencies
 ```
 
-## Environment Variables
+### Commit Messages
+- Use conventional commit style
+- Be descriptive but concise
+- Reference issue numbers when applicable
 
-```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-STRIPE_SECRET_KEY
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-STRIPE_WEBHOOK_SECRET
-RESEND_API_KEY
-NEXT_PUBLIC_APP_URL
-```
+### PR Process
+1. Create feature branch from main
+2. Make changes with atomic commits
+3. Open PR with description of changes
+4. Review and merge (squash if many small commits)
 
-## Reference Docs
-
-- Full technical spec: `/docs/SPEC.md`
-- Stripe docs: https://stripe.com/docs
-- Supabase docs: https://supabase.com/docs
-- Resend docs: https://resend.com/docs
-
-## Current Status
-
-🚧 **In Development**
-
-Building MVP with Lexie (manager) as first tester. Kate doesn't know about the rebuild yet — proving it works first.
+---
 
 ## Commands
 
 ```bash
-npm run dev      # Start dev server
-npm run build    # Production build
-npm run lint     # Run ESLint
+# Development
+npm run dev          # Start dev server (http://localhost:3000)
+
+# Build & Deploy
+npm run build        # Production build
+npm run start        # Start production server
+
+# Code Quality
+npm run lint         # Run ESLint
+
+# Database (Supabase)
+# Generate types after schema changes:
+npx supabase gen types typescript --project-id <project-id> > types/database.ts
 ```
+
+---
+
+## MCP Servers
+
+This project has three MCP (Model Context Protocol) servers configured in `.mcp.json`:
+
+| Server | Purpose | Package |
+|--------|---------|---------|
+| **stripe** | Manage customers, products, subscriptions, payments | `@stripe/mcp` |
+| **supabase** | Database queries, table management, edge functions | `@supabase/mcp` |
+| **playwright** | Browser automation, E2E testing, UI verification | `@playwright/mcp` |
+
+### Usage
+- MCPs are automatically available in Claude Code sessions
+- Use `/mcp` to check server status
+- Stripe and Supabase require env vars to be set in `.env.local`
+
+### When to Use
+- **Stripe MCP**: Creating products, managing customers, testing payments
+- **Supabase MCP**: Running queries, checking schema, debugging data issues
+- **Playwright MCP**: Testing UI flows, verifying frontend behavior, E2E tests
+
+---
+
+## Testing Instructions
+
+### Local Development
+1. Copy `.env.example` to `.env.local` and fill in values
+2. Run `npm run dev`
+3. Access dashboard at `http://localhost:3000`
+
+### Testing Payment Flows
+- Use Stripe test mode (test API keys in `.env.local`)
+- Test card: `4242 4242 4242 4242` (any future expiry, any CVC)
+- Use Stripe CLI for webhook testing: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+
+### Testing User Roles
+- Test with different role accounts to verify RLS policies
+- Admin/Manager should see all data
+- Trainers should only see their assigned clients
+
+---
+
+## Documentation References
+
+| Doc | Purpose |
+|-----|---------|
+| [Project Spec](docs/project_spec.md) | Full requirements, API specs, database schema |
+| [Architecture](docs/architecture.md) | System design, data flow, component relationships |
+| [Changelog](docs/changelog.md) | Version history, feature additions |
+| [Project Status](docs/project_status.md) | Current progress, milestones |
+
+**Update docs after major milestones** using `/update-docs-and-commit` command.
+
+---
+
+## Environment Variables
+
+```
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Stripe
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# Resend
+RESEND_API_KEY=
+
+# App
+NEXT_PUBLIC_APP_URL=
+```
+
+---
+
+## Quick Reference
+
+### Commission Logic
+```typescript
+if (trainer.role === "admin") {
+  trainer_commission_rate = 1.0;   // Kate keeps 100%
+  trainer_amount = amount;
+  owner_amount = 0;
+} else {
+  trainer_commission_rate = 0.7;   // Others get 70%
+  trainer_amount = amount * 0.7;
+  owner_amount = amount * 0.3;     // Kate gets 30%
+}
+```
+
+### Database Tables
+- `users` — Staff/trainers with role and commission_rate
+- `clients` — Clients with stripe_customer_id for saved cards
+- `programs` — Templates (3 Month Coaching, Testing Fee, etc.)
+- `purchases` — Transactions with commission breakdown
+- `payment_links` — One-time use, auto-expire checkout links
+- `audit_log` — Track all sensitive operations
+
+See [Project Spec](docs/project_spec.md) for full schema.

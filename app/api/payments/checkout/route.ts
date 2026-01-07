@@ -102,6 +102,11 @@ export async function POST(request: Request) {
       client = createdClient
       client_id = createdClient.id
     } else {
+      // Must have client_id if not creating new client
+      if (!client_id) {
+        return NextResponse.json({ error: 'Client ID is required' }, { status: 400 })
+      }
+
       // Verify existing client exists and user has access
       const { data: existingClient, error: clientError } = await supabase
         .from('clients')

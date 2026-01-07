@@ -7,9 +7,9 @@ import { z } from 'zod'
 const createClientSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Valid email is required'),
-  phone: z.string().optional(),
+  phone: z.string().nullable().optional(),
   assigned_trainer_id: z.string().uuid('Valid trainer ID is required'),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 })
 
 /**

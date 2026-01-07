@@ -9,9 +9,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Planned
-- Recharge existing clients (saved cards)
-- Admin reports (revenue, commission breakdown)
 - Email confirmations (Resend)
+- Team management page
+- Program management page
+- Dashboard home with real stats
+
+---
+
+## [0.4.0] - 2026-01-07
+
+### Added
+- **Reports & Commission Tracking (Milestone 4)**
+  - Reports page for admin/manager users
+  - Commission breakdown by trainer table
+  - Summary cards (Total Revenue, Trainer Payouts, Owner Cut)
+  - Semi-monthly pay period support (1st-15th, 16th-end of month)
+  - Date range presets (Current/Previous Pay Period, This Month, etc.)
+  - Custom date range picker
+  - CSV export with totals row
+
+- **API Routes**
+  - `GET /api/reports/commissions` - Get commission data by date range
+
+- **Utilities**
+  - `lib/dateRanges.ts` - Pay period calculation and date range helpers
+
+### Technical
+- Role-based access control (admin/manager only)
+- Aggregation by trainer with client count
+- Responsive table design for mobile
+
+---
+
+## [0.3.0] - 2026-01-07
+
+### Added
+- **Recharge Existing Clients (Milestone 3)**
+  - One-click charge for clients with saved payment methods
+  - New Charge modal with program selection and commission preview
+  - Payment method selector showing saved cards from Stripe
+  - Support for ongoing vs fixed-term subscriptions
+  - Commission split preview before charging
+
+- **API Routes**
+  - `GET /api/clients/[id]/payment-methods` - Fetch saved cards from Stripe
+  - `POST /api/payments/charge` - Charge saved payment method
+
+- **UI Components**
+  - `NewChargeModal` - Modal for one-click recharges with commission preview
+  - `ClientQuickActions` - Quick action buttons on client profile
+
+### Technical
+- Automatic Stripe subscription creation with duration support
+- Commission calculation stored at charge time
+- Error handling for declined cards and payment failures
+- Defensive rollback if purchase record creation fails after Stripe charge
 
 ---
 

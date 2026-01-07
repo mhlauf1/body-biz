@@ -2,6 +2,7 @@ import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import type { Database } from '@/types/database'
+import { sendWelcomeReceiptEmail } from '@/lib/email'
 
 // Use service role key for webhook handler (bypasses RLS)
 const supabaseAdmin = createClient<Database>(
@@ -145,6 +146,85 @@ async function handleCheckoutSessionCompleted(session: any) {
       amount_total: session.amount_total,
     },
   })
+
+  // Send welcome email to client
+  try {
+    // Fetch purchase details with joins
+    const { data: purchaseDetails } = await supabaseAdmin
+      .from('purchases')
+      .select(`
+        id,
+        amount,
+        duration_months,
+        start_date,
+        custom_program_name,
+        client:clients!purchases_client_id_fkey(id, name, email),
+        trainer:users!purchases_trainer_id_fkey(id, name),
+        program:programs!purchases_program_id_fkey(id, name)
+      `)
+      .eq('id', purchaseId)
+      .single()
+
+    if (purchaseDetails) {
+      // Get card last 4 from Stripe (if customer exists)
+      let cardLast4: string | null = null
+      if (stripeCustomerId) {
+        try {
+          const paymentMethods = await stripe.paymentMethods.list({
+            customer: stripeCustomerId,
+            type: 'card',
+            limit: 1,
+          })
+          cardLast4 = paymentMethods.data[0]?.card?.last4 || null
+        } catch (err) {
+          console.error('Could not fetch card details:', err)
+        }
+      }
+
+      const client = purchaseDetails.client as { id: string; name: string; email: string } | null
+      const trainer = purchaseDetails.trainer as { id: string; name: string } | null
+      const program = purchaseDetails.program as { id: string; name: string } | null
+
+      if (client?.email) {
+        const emailResult = await sendWelcomeReceiptEmail({
+          clientName: client.name || 'Valued Client',
+          clientEmail: client.email,
+          programName: program?.name || purchaseDetails.custom_program_name || 'Personal Training',
+          trainerName: trainer?.name || 'Your Trainer',
+          amount: purchaseDetails.amount || 0,
+          durationMonths: purchaseDetails.duration_months,
+          startDate: purchaseDetails.start_date ? new Date(purchaseDetails.start_date) : new Date(),
+          cardLast4,
+        })
+
+        if (!emailResult.success) {
+          // Log email failure to audit_log (but don't fail the webhook)
+          await supabaseAdmin.from('audit_log').insert({
+            action: 'email_failed',
+            entity_type: 'purchase',
+            entity_id: purchaseId,
+            details: {
+              email_type: 'welcome_receipt',
+              error: emailResult.error,
+              client_email: client.email,
+            },
+          })
+        }
+      }
+    }
+  } catch (emailError) {
+    // Email failure should not fail the webhook
+    console.error('Failed to send welcome email:', emailError)
+    await supabaseAdmin.from('audit_log').insert({
+      action: 'email_failed',
+      entity_type: 'purchase',
+      entity_id: purchaseId,
+      details: {
+        email_type: 'welcome_receipt',
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+      },
+    })
+  }
 
   console.log(`Checkout completed for purchase ${purchaseId}`)
 }

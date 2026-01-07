@@ -9,12 +9,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Planned
-- Email confirmations (Resend)
 - Team management page
 - Program management page
-- Dashboard home with real stats
 - Failed payment handling UI
 - Subscription pause/resume/cancel
+
+---
+
+## [0.6.0] - 2026-01-07
+
+### Added
+- **Dashboard Stats & Activity Feed (Milestone 6)**
+  - Real-time stats: Revenue (This Month), Active Clients, Pending Links
+  - Role-based filtering (trainers see only their data)
+  - Activity feed showing recent purchases with status icons
+  - Relative timestamps ("2 min ago") for activity items
+
+- **Email Confirmations via Resend**
+  - Email infrastructure with Resend integration (`lib/email.ts`)
+  - Welcome/receipt email on checkout completion
+  - Professional HTML template with subscription details
+  - Graceful degradation when API key not configured
+  - Email failures logged to audit_log (don't fail webhooks)
+
+- **UI Components**
+  - `ActivityFeed` component for dashboard activity display
+  - Status icons (green checkmark, red X) for activity types
+
+### Fixed
+- Login page now uses Suspense boundary for `useSearchParams()` (Next.js 16 requirement)
+- Login page error handling refactored to avoid setState in useEffect
+- Checkout API now properly validates client_id when not creating new client
+
+### Technical
+- Email templates include card last 4 digits from Stripe
+- Purchase data fetched with client/trainer/program joins for email context
+- Dashboard queries optimized with role-based filtering at query level
 
 ---
 

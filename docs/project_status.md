@@ -12,7 +12,7 @@ Milestone 1: Foundation       [==========] 100% ✓
 Milestone 2: Payment Links    [==========] 100% ✓
 Milestone 3: Recharge         [==========] 100% ✓
 Milestone 4: Reports          [==========] 100% ✓
-Milestone 5: Polish           [======----] 60%
+Milestone 5: Polish           [========--] 80%
 ```
 
 ---
@@ -143,7 +143,7 @@ Milestone 5: Polish           [======----] 60%
 
 ### Milestone 5: Polish & Secondary Features
 
-**Status:** In Progress (~60%)
+**Status:** In Progress (~80%)
 
 | Task                              | Status  |
 | --------------------------------- | ------- |
@@ -154,11 +154,11 @@ Milestone 5: Polish           [======----] 60%
 | Public payment success/cancelled  | Done    |
 | Login validation improvements     | Done    |
 | Testing documentation             | Done    |
-| Dashboard home with stats         | Pending |
-| Recent activity feed              | Pending |
+| Dashboard home with stats         | Done    |
+| Recent activity feed              | Done    |
+| Email confirmations (Resend)      | Done    |
 | Team management                   | Pending |
 | Program management                | Pending |
-| Email confirmations (Resend)      | Pending |
 | Handle failed payments            | Pending |
 | Pause/resume/cancel subscriptions | Pending |
 
@@ -171,14 +171,18 @@ Milestone 5: Polish           [======----] 60%
 - `app/(public)/payments/cancelled/page.tsx` - Client-facing payment cancelled page
 - `TESTING_OUTLINE.md` - Comprehensive testing guide
 - `scripts/set-user-passwords.js` - Test user password helper
+- `components/dashboard/ActivityFeed.tsx` - Dashboard activity feed component
+- `lib/email.ts` - Resend email client and templates
 
 **Files significantly updated:**
 
 - `components/payments/PaymentLinkForm.tsx` - Major UX overhaul
 - `app/api/payments/checkout/route.ts` - Support for inline client creation
 - `components/clients/ClientQuickActions.tsx` - Pending link display
-- `app/(auth)/login/page.tsx` - Profile validation on login
+- `app/(auth)/login/page.tsx` - Profile validation on login, Suspense fix
 - `app/(dashboard)/payments/page.tsx` - Added pending links section
+- `app/(dashboard)/page.tsx` - Real stats and activity feed
+- `app/api/webhooks/stripe/route.ts` - Welcome email on checkout
 
 ---
 
@@ -259,12 +263,16 @@ Priority items still pending:
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| Dashboard Stats | Replace placeholder stats with real data | High |
-| Email Confirmations | Send receipts via Resend on purchase | High |
 | Failed Payment Handling | UI to show failed payments, retry options | Medium |
 | Team Management | `/team` page to add/edit trainers | Medium |
 | Program Management | `/programs` page to add/edit programs | Medium |
 | Subscription Actions | Pause/resume/cancel buttons | Low |
+
+### Recently Completed
+
+- **Dashboard Stats** - Real-time stats with role-based filtering
+- **Activity Feed** - Recent purchases with status icons and relative timestamps
+- **Email Confirmations** - Welcome/receipt emails via Resend on checkout
 
 ---
 
@@ -383,4 +391,4 @@ Use `scripts/set-user-passwords.js` to reset test user passwords if needed.
 
 ---
 
-_Last updated: 2026-01-07 (M5 Polish in progress)_
+_Last updated: 2026-01-07 (M5 Polish ~80%, dashboard & email complete)_

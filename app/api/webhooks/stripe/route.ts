@@ -72,6 +72,9 @@ export async function POST(request: Request) {
 /**
  * Handle checkout.session.completed
  * Updates purchase status, marks payment link as used, stores Stripe customer ID
+ *
+ * CRITICAL: This handler throws on critical failures so webhook returns 500
+ * and Stripe will retry. Non-critical failures (email, audit) are logged but don't throw.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleCheckoutSessionCompleted(session: any) {
@@ -80,7 +83,8 @@ async function handleCheckoutSessionCompleted(session: any) {
 
   if (!purchaseId || !clientId) {
     console.error('Missing metadata in checkout session:', session.id)
-    return
+    // Throw so Stripe retries - we can't process without metadata
+    throw new Error(`Missing metadata in checkout session: ${session.id}`)
   }
 
   console.log(`Processing completed checkout for purchase ${purchaseId}`)
@@ -91,7 +95,8 @@ async function handleCheckoutSessionCompleted(session: any) {
   // If subscription mode, get subscription ID
   const subscriptionId = session.subscription as string | null
 
-  // Update purchase status to active
+  // CRITICAL: Update purchase status to active
+  // This MUST succeed - throw if it fails so Stripe retries
   const { error: purchaseError } = await supabaseAdmin
     .from('purchases')
     .update({
@@ -103,10 +108,12 @@ async function handleCheckoutSessionCompleted(session: any) {
     .eq('id', purchaseId)
 
   if (purchaseError) {
-    console.error('Error updating purchase:', purchaseError)
+    console.error('CRITICAL: Error updating purchase:', purchaseError)
+    throw new Error(`Failed to update purchase ${purchaseId}: ${purchaseError.message}`)
   }
 
-  // Mark payment link as used
+  // CRITICAL: Mark payment link as used
+  // This MUST succeed to prevent double-use of links
   const { error: linkError } = await supabaseAdmin
     .from('payment_links')
     .update({
@@ -116,10 +123,12 @@ async function handleCheckoutSessionCompleted(session: any) {
     .eq('stripe_checkout_session_id', session.id)
 
   if (linkError) {
-    console.error('Error updating payment link:', linkError)
+    console.error('CRITICAL: Error updating payment link:', linkError)
+    throw new Error(`Failed to mark payment link as used for session ${session.id}: ${linkError.message}`)
   }
 
-  // Store Stripe customer ID on client record
+  // NON-CRITICAL: Store Stripe customer ID on client record
+  // Nice to have for future charges, but not essential for this transaction
   if (stripeCustomerId && clientId) {
     const { error: clientError } = await supabaseAdmin
       .from('clients')
@@ -130,7 +139,8 @@ async function handleCheckoutSessionCompleted(session: any) {
       .eq('id', clientId)
 
     if (clientError) {
-      console.error('Error updating client:', clientError)
+      // Log but don't throw - customer ID can be set on next transaction
+      console.error('Non-critical: Error updating client stripe_customer_id:', clientError)
     }
   }
 
@@ -290,6 +300,8 @@ async function handleInvoicePaid(invoice: any) {
 /**
  * Handle invoice.payment_failed
  * Updates purchase status to failed
+ *
+ * CRITICAL: Throws on failure so Stripe retries
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleInvoicePaymentFailed(invoice: any) {
@@ -305,10 +317,12 @@ async function handleInvoicePaymentFailed(invoice: any) {
     .single()
 
   if (fetchError || !purchase) {
+    // This is OK - might be a subscription we don't track
     console.log(`No purchase found for subscription ${subscriptionId}`)
     return
   }
 
+  // CRITICAL: Update purchase status
   const { error: updateError } = await supabaseAdmin
     .from('purchases')
     .update({
@@ -318,10 +332,11 @@ async function handleInvoicePaymentFailed(invoice: any) {
     .eq('id', purchase.id)
 
   if (updateError) {
-    console.error('Error updating purchase status:', updateError)
+    console.error('CRITICAL: Error updating purchase status to failed:', updateError)
+    throw new Error(`Failed to update purchase ${purchase.id} status: ${updateError.message}`)
   }
 
-  // Log the failure
+  // Log the failure (non-critical)
   await supabaseAdmin.from('audit_log').insert({
     action: 'payment_failed',
     entity_type: 'purchase',
@@ -339,6 +354,8 @@ async function handleInvoicePaymentFailed(invoice: any) {
 /**
  * Handle customer.subscription.deleted
  * Updates purchase status when subscription is cancelled
+ *
+ * CRITICAL: Throws on failure so Stripe retries
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleSubscriptionDeleted(subscription: any) {
@@ -350,10 +367,12 @@ async function handleSubscriptionDeleted(subscription: any) {
     .single()
 
   if (fetchError || !purchase) {
+    // This is OK - might be a subscription we don't track
     console.log(`No purchase found for subscription ${subscription.id}`)
     return
   }
 
+  // CRITICAL: Update purchase status
   const { error: updateError } = await supabaseAdmin
     .from('purchases')
     .update({
@@ -363,10 +382,11 @@ async function handleSubscriptionDeleted(subscription: any) {
     .eq('id', purchase.id)
 
   if (updateError) {
-    console.error('Error updating purchase status:', updateError)
+    console.error('CRITICAL: Error updating purchase status to cancelled:', updateError)
+    throw new Error(`Failed to update purchase ${purchase.id} to cancelled: ${updateError.message}`)
   }
 
-  // Log the cancellation
+  // Log the cancellation (non-critical)
   await supabaseAdmin.from('audit_log').insert({
     action: 'subscription_cancelled',
     entity_type: 'purchase',

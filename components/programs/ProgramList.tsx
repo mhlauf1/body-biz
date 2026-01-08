@@ -9,7 +9,9 @@ import { Package, RefreshCw, PlusCircle } from 'lucide-react'
 interface Program {
   id: string
   name: string
-  default_price: number
+  description: string | null
+  default_price: number | null
+  default_duration_months: number | null
   is_addon: boolean
   is_recurring: boolean
   is_active: boolean
@@ -154,7 +156,7 @@ export function ProgramList({ initialPrograms }: ProgramListProps) {
                   </td>
                   <td className="whitespace-nowrap px-4 py-4">
                     <span className="text-sm font-medium text-gray-900">
-                      {formatCurrency(program.default_price)}
+                      {formatCurrency(program.default_price ?? 0)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-4">

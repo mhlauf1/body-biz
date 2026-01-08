@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const includeInactive = searchParams.get('include_inactive') === 'true'
-    const search = searchParams.get('search')
+    const search = searchParams.get('search')?.slice(0, 255) // Limit search length
 
     let query = supabase
       .from('programs')

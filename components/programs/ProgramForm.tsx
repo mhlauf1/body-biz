@@ -8,10 +8,14 @@ import { AlertCircle } from 'lucide-react'
 interface Program {
   id: string
   name: string
-  default_price: number
+  description: string | null
+  default_price: number | null
+  default_duration_months: number | null
   is_addon: boolean
   is_recurring: boolean
   is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 interface ProgramFormProps {

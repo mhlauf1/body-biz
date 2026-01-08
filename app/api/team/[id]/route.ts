@@ -211,6 +211,34 @@ export async function DELETE(
       return NextResponse.json({ error: 'Team member not found' }, { status: 404 })
     }
 
+    // Check if trainer has any active clients assigned
+    // Must reassign clients before deactivating trainer
+    const { data: assignedClients, error: clientsError } = await supabaseAdmin
+      .from('clients')
+      .select('id, name')
+      .eq('assigned_trainer_id', id)
+      .eq('is_active', true)
+      .limit(5) // Just get a few for the error message
+
+    if (clientsError) {
+      console.error('Error checking assigned clients:', clientsError)
+      return NextResponse.json(
+        { error: 'Failed to check assigned clients' },
+        { status: 500 }
+      )
+    }
+
+    if (assignedClients && assignedClients.length > 0) {
+      const clientNames = assignedClients.map((c) => c.name).join(', ')
+      const moreClients = assignedClients.length >= 5 ? ' and more...' : ''
+      return NextResponse.json(
+        {
+          error: `Cannot deactivate trainer with assigned clients. Please reassign these clients first: ${clientNames}${moreClients}`,
+        },
+        { status: 400 }
+      )
+    }
+
     // Soft delete: set is_active to false
     const { data: deactivatedMember, error: deleteError } = await supabaseAdmin
       .from('users')

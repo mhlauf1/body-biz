@@ -23,6 +23,7 @@ const createTeamMemberSchema = z.object({
 /**
  * GET /api/team
  * List all team members (admin/manager only)
+ * Supports pagination with limit and offset
  */
 export async function GET(request: Request) {
   try {
@@ -38,14 +39,22 @@ export async function GET(request: Request) {
 
     const supabase = await createServerClient()
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
+    const search = searchParams.get('search')?.slice(0, 255) // Limit search length
     const role = searchParams.get('role')
     const includeInactive = searchParams.get('include_inactive') === 'true'
+
+    // Pagination params with sensible defaults and limits
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get('limit') || '50', 10) || 50, 1),
+      100 // Max 100 items per page
+    )
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10) || 0, 0)
 
     let query = supabase
       .from('users')
       .select('*')
       .order('name', { ascending: true })
+      .range(offset, offset + limit - 1)
 
     // Filter by active status (default: only active)
     if (!includeInactive) {
@@ -69,7 +78,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch team members' }, { status: 500 })
     }
 
-    return NextResponse.json({ data: members })
+    return NextResponse.json({
+      data: members,
+      pagination: {
+        limit,
+        offset,
+        count: members?.length || 0,
+        hasMore: (members?.length || 0) === limit,
+      },
+    })
   } catch (error) {
     console.error('Error in GET /api/team:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

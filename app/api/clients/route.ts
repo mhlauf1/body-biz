@@ -16,6 +16,7 @@ const createClientSchema = z.object({
  * GET /api/clients
  * List all clients (filtered by role - trainers only see their own)
  * Includes latest purchase/subscription info for each client
+ * Supports pagination with limit and offset
  */
 export async function GET(request: Request) {
   try {
@@ -26,9 +27,16 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
+    const search = searchParams.get('search')?.slice(0, 255) // Limit search length
     const trainerId = searchParams.get('trainer_id')
     const statusFilter = searchParams.get('status') // active, paused, failed, none
+
+    // Pagination params with sensible defaults and limits
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get('limit') || '50', 10) || 50, 1),
+      100 // Max 100 items per page
+    )
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10) || 0, 0)
 
     let query = supabase
       .from('clients')
@@ -48,6 +56,7 @@ export async function GET(request: Request) {
       `)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     // Trainers can only see their own clients
     if (!isAdminOrManager(user)) {
@@ -104,7 +113,15 @@ export async function GET(request: Request) {
       filteredClients = processedClients.filter(c => c.subscription_status === statusFilter)
     }
 
-    return NextResponse.json({ clients: filteredClients })
+    return NextResponse.json({
+      clients: filteredClients,
+      pagination: {
+        limit,
+        offset,
+        count: filteredClients.length,
+        hasMore: filteredClients.length === limit, // May have more if we got a full page
+      },
+    })
   } catch (error) {
     console.error('Error in GET /api/clients:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -175,6 +192,13 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Error creating client:', error)
+      // Handle unique constraint violation (race condition with check above)
+      if (error.code === '23505' || error.message?.includes('duplicate key')) {
+        return NextResponse.json(
+          { error: 'A client with this email already exists' },
+          { status: 409 }
+        )
+      }
       return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
     }
 

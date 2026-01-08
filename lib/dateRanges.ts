@@ -1,4 +1,8 @@
 import { format, startOfQuarter, startOfYear, subDays } from 'date-fns'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
+
+// Business timezone for The Body Biz (Columbus, OH)
+const BUSINESS_TIMEZONE = 'America/New_York'
 
 export interface DateRange {
   start: Date
@@ -13,15 +17,26 @@ export interface DateRangePreset {
 }
 
 /**
+ * Get the current date/time in the business timezone
+ * This ensures consistent date calculations regardless of server timezone
+ */
+function getBusinessDate(date: Date = new Date()): Date {
+  return toZonedTime(date, BUSINESS_TIMEZONE)
+}
+
+/**
  * Get the current pay period boundaries
  * Semi-monthly pay periods:
  * - Period 1: 1st - 15th of month
  * - Period 2: 16th - last day of month
+ *
+ * All calculations use Columbus, OH timezone for consistency
  */
 export function getCurrentPayPeriod(date: Date = new Date()): DateRange {
-  const day = date.getDate()
-  const year = date.getFullYear()
-  const month = date.getMonth()
+  const bizDate = getBusinessDate(date)
+  const day = bizDate.getDate()
+  const year = bizDate.getFullYear()
+  const month = bizDate.getMonth()
 
   if (day <= 15) {
     // First half: 1st - 15th
@@ -43,11 +58,13 @@ export function getCurrentPayPeriod(date: Date = new Date()): DateRange {
 
 /**
  * Get the previous pay period boundaries
+ * All calculations use Columbus, OH timezone for consistency
  */
 export function getPreviousPayPeriod(date: Date = new Date()): DateRange {
-  const day = date.getDate()
-  const year = date.getFullYear()
-  const month = date.getMonth()
+  const bizDate = getBusinessDate(date)
+  const day = bizDate.getDate()
+  const year = bizDate.getFullYear()
+  const month = bizDate.getMonth()
 
   if (day <= 15) {
     // Currently in first half, previous is second half of last month
@@ -71,10 +88,12 @@ export function getPreviousPayPeriod(date: Date = new Date()): DateRange {
 
 /**
  * Get this month's date range
+ * All calculations use Columbus, OH timezone for consistency
  */
 export function getThisMonth(date: Date = new Date()): DateRange {
-  const year = date.getFullYear()
-  const month = date.getMonth()
+  const bizDate = getBusinessDate(date)
+  const year = bizDate.getFullYear()
+  const month = bizDate.getMonth()
   const lastDay = new Date(year, month + 1, 0).getDate()
 
   return {

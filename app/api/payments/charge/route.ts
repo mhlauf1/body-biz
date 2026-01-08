@@ -4,13 +4,14 @@ import { stripe } from '@/lib/stripe'
 import { calcCommission } from '@/lib/utils'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { randomUUID } from 'crypto'
 import type { UserRole } from '@/types'
 
 const chargeSchema = z.object({
   client_id: z.string().uuid('Valid client ID is required'),
   program_id: z.string().uuid('Valid program ID is required').optional(),
   custom_program_name: z.string().optional(),
-  amount: z.number().positive('Amount must be positive'),
+  amount: z.number().positive('Amount must be positive').max(99999, 'Amount cannot exceed $99,999'),
   duration_months: z.number().int().min(0).max(12), // 0 = ongoing
   payment_method_id: z.string().min(1, 'Payment method is required'),
 })
@@ -101,19 +102,28 @@ export async function POST(request: Request) {
     // Build product name
     const productName = program?.name || custom_program_name || 'Custom Program'
 
+    // Generate idempotency key for this charge request
+    // This prevents duplicate charges if the request is retried
+    const idempotencyKey = randomUUID()
+
     // Create Stripe Price for the subscription
-    const price = await stripe.prices.create({
-      currency: 'usd',
-      unit_amount: Math.round(amount * 100), // cents
-      recurring: { interval: 'month' },
-      product_data: {
-        name: productName,
-        metadata: {
-          client_id: client.id,
-          trainer_id: trainer.id,
+    const price = await stripe.prices.create(
+      {
+        currency: 'usd',
+        unit_amount: Math.round(amount * 100), // cents
+        recurring: { interval: 'month' },
+        product_data: {
+          name: productName,
+          metadata: {
+            client_id: client.id,
+            trainer_id: trainer.id,
+          },
         },
       },
-    })
+      {
+        idempotencyKey: `price_${idempotencyKey}`,
+      }
+    )
 
     // Build subscription config
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,11 +143,13 @@ export async function POST(request: Request) {
       subscriptionConfig.cancel_at = Math.floor(endDate.getTime() / 1000)
     }
 
-    // Create Stripe Subscription
+    // Create Stripe Subscription with idempotency key
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let subscription: any
     try {
-      subscription = await stripe.subscriptions.create(subscriptionConfig)
+      subscription = await stripe.subscriptions.create(subscriptionConfig, {
+        idempotencyKey: `sub_${idempotencyKey}`,
+      })
     } catch (stripeError: unknown) {
       // Handle Stripe-specific errors
       const error = stripeError as { type?: string; code?: string; message?: string }
@@ -184,9 +196,30 @@ export async function POST(request: Request) {
       .single()
 
     if (purchaseError || !purchase) {
-      console.error('Error creating purchase:', purchaseError)
+      console.error('CRITICAL: Error creating purchase:', purchaseError)
       // Try to cancel the subscription since we couldn't record it
-      await stripe.subscriptions.cancel(subscription.id)
+      try {
+        await stripe.subscriptions.cancel(subscription.id)
+        console.log(`Cancelled orphan subscription ${subscription.id}`)
+      } catch (cancelError) {
+        // CRITICAL: Subscription exists in Stripe but we have no record of it
+        // Log to audit for manual intervention
+        console.error('CRITICAL: Failed to cancel orphan subscription:', cancelError)
+        await supabase.from('audit_log').insert({
+          user_id: user.id,
+          action: 'orphan_subscription_alert',
+          entity_type: 'subscription',
+          entity_id: subscription.id,
+          details: {
+            client_id,
+            stripe_subscription_id: subscription.id,
+            stripe_customer_id: client.stripe_customer_id,
+            amount,
+            error: cancelError instanceof Error ? cancelError.message : 'Unknown error',
+            action_required: 'MANUAL CANCELLATION REQUIRED - Subscription created but not recorded, and auto-cancel failed',
+          },
+        })
+      }
       return NextResponse.json({ error: 'Failed to create purchase record' }, { status: 500 })
     }
 

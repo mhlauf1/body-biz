@@ -20,7 +20,7 @@ const checkoutSchema = z.object({
   program_id: z.string().uuid('Valid program ID is required').optional(),
   custom_program_name: z.string().optional(),
   trainer_id: z.string().uuid('Valid trainer ID is required'),
-  amount: z.number().positive('Amount must be positive'),
+  amount: z.number().positive('Amount must be positive').max(99999, 'Amount cannot exceed $99,999'),
   duration_months: z.number().int().positive().optional(), // null for one-time or ongoing
   is_recurring: z.boolean().default(true),
 }).refine(
@@ -138,13 +138,22 @@ export async function POST(request: Request) {
     }
 
     // Get program info if provided
+    // Only allow active programs
     let program = null
     if (program_id) {
-      const { data: programData } = await supabase
+      const { data: programData, error: programError } = await supabase
         .from('programs')
         .select('*')
         .eq('id', program_id)
+        .eq('is_active', true)
         .single()
+
+      if (programError || !programData) {
+        return NextResponse.json(
+          { error: 'Program not found or is no longer available' },
+          { status: 404 }
+        )
+      }
       program = programData
     }
 
@@ -262,7 +271,8 @@ export async function POST(request: Request) {
 
     const session = await stripe.checkout.sessions.create(sessionConfig)
 
-    // Create payment link record
+    // CRITICAL: Create payment link record
+    // Must succeed so link is trackable in the dashboard
     const { data: paymentLink, error: linkError } = await supabase
       .from('payment_links')
       .insert({
@@ -276,8 +286,14 @@ export async function POST(request: Request) {
       .select()
       .single()
 
-    if (linkError) {
-      console.error('Error creating payment link:', linkError)
+    if (linkError || !paymentLink) {
+      console.error('CRITICAL: Error creating payment link:', linkError)
+      // Return error - the Stripe session exists but we can't track it
+      // User should be informed to try again
+      return NextResponse.json(
+        { error: 'Failed to create payment link record. Please try again.' },
+        { status: 500 }
+      )
     }
 
     // Update purchase with link reference
@@ -285,7 +301,7 @@ export async function POST(request: Request) {
       .from('purchases')
       .update({
         stripe_checkout_session_id: session.id,
-        payment_link_id: paymentLink?.id,
+        payment_link_id: paymentLink.id,
       })
       .eq('id', purchase.id)
 
@@ -294,7 +310,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       action: 'create_payment_link',
       entity_type: 'payment_link',
-      entity_id: paymentLink?.id,
+      entity_id: paymentLink.id,
       details: {
         client_id,
         purchase_id: purchase.id,

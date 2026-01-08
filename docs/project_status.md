@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-**Milestone 5: Polish** (In Progress)
+**Milestone 5: Polish** (In Progress) - UI Refactor Complete
 
 ## Overall Progress
 
@@ -12,7 +12,7 @@ Milestone 1: Foundation       [==========] 100% ✓
 Milestone 2: Payment Links    [==========] 100% ✓
 Milestone 3: Recharge         [==========] 100% ✓
 Milestone 4: Reports          [==========] 100% ✓
-Milestone 5: Polish           [========--] 80%
+Milestone 5: Polish           [=========-] 85%
 ```
 
 ---
@@ -143,7 +143,7 @@ Milestone 5: Polish           [========--] 80%
 
 ### Milestone 5: Polish & Secondary Features
 
-**Status:** In Progress (~80%)
+**Status:** In Progress (~85%)
 
 | Task                              | Status  |
 | --------------------------------- | ------- |
@@ -157,6 +157,8 @@ Milestone 5: Polish           [========--] 80%
 | Dashboard home with stats         | Done    |
 | Recent activity feed              | Done    |
 | Email confirmations (Resend)      | Done    |
+| UI terminology refactor           | Done    |
+| UI color scheme update            | Done    |
 | Team management                   | Pending |
 | Program management                | Pending |
 | Handle failed payments            | Pending |
@@ -183,6 +185,12 @@ Milestone 5: Polish           [========--] 80%
 - `app/(dashboard)/payments/page.tsx` - Added pending links section
 - `app/(dashboard)/page.tsx` - Real stats and activity feed
 - `app/api/webhooks/stripe/route.ts` - Welcome email on checkout
+- `app/(dashboard)/customers/page.tsx` - Customer list (renamed from clients)
+- `app/(dashboard)/customers/[id]/page.tsx` - Customer profile
+- `app/(dashboard)/customers/new/page.tsx` - Add customer form
+- `app/(dashboard)/transactions/page.tsx` - Transaction history (renamed from payments)
+- `app/(dashboard)/create-link/page.tsx` - Create payment link (separated route)
+- `components/customers/` - Customer components (moved from components/clients/)
 
 ---
 
@@ -200,11 +208,16 @@ Milestone 5: Polish           [========--] 80%
 
 ---
 
-## Latest Work: Milestone 5 - Polish & UX Improvements
+## Latest Work: UI Refactor & Terminology Update
 
 ### What Was Built
 
-Major UX improvements to the payment link creation flow and client profile pages, plus infrastructure for client-facing payment pages.
+Major UI overhaul to improve consistency and user experience:
+
+- **Terminology Update**: "Clients" renamed to "Customers", "Payments" renamed to "Transactions"
+- **Route Restructuring**: Cleaner URL structure with `/customers`, `/transactions`, and `/create-link`
+- **Color Scheme**: Updated from indigo to neutral gray for a cleaner Stripe-like aesthetic
+- **Navigation**: Simplified dashboard sidebar with intuitive labels
 
 ### Payment Link Form Overhaul
 
@@ -391,4 +404,4 @@ Use `scripts/set-user-passwords.js` to reset test user passwords if needed.
 
 ---
 
-_Last updated: 2026-01-07 (M5 Polish ~80%, dashboard & email complete)_
+_Last updated: 2026-01-07 (M5 Polish ~85%, UI refactor complete)_

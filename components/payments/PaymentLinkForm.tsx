@@ -239,9 +239,9 @@ export function PaymentLinkForm({
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-center justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
               <svg
-                className="h-6 w-6 text-green-600"
+                className="h-6 w-6 text-emerald-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -264,7 +264,7 @@ export function PaymentLinkForm({
             Send this link to {generatedLink.clientName}:
           </p>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
             <code className="block break-all text-sm text-gray-800">
               {generatedLink.url}
             </code>
@@ -318,8 +318,8 @@ export function PaymentLinkForm({
           </div>
         </CardContent>
         <CardFooter>
-          <Button variant="ghost" className="w-full" onClick={() => router.push('/payments')}>
-            View All Payments
+          <Button variant="ghost" className="w-full" onClick={() => router.push('/transactions')}>
+            View All Transactions
           </Button>
         </CardFooter>
       </Card>
@@ -338,7 +338,7 @@ export function PaymentLinkForm({
 
           {/* Client Mode Toggle */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-500">
               Client *
             </label>
             <div className="mb-3 flex gap-4">
@@ -352,7 +352,7 @@ export function PaymentLinkForm({
                     setFormData((prev) => ({ ...prev, client_id: '' }))
                     setErrors((prev) => ({ ...prev, client_id: undefined }))
                   }}
-                  className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900/20"
                 />
                 <span className="text-sm text-gray-700">New Client</span>
               </label>
@@ -370,7 +370,7 @@ export function PaymentLinkForm({
                       new_client_email: undefined,
                     }))
                   }}
-                  className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900/20"
                 />
                 <span className="text-sm text-gray-700">Existing Client</span>
               </label>
@@ -495,7 +495,7 @@ export function PaymentLinkForm({
               name="is_recurring"
               checked={formData.is_recurring}
               onChange={handleChange}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900/20"
             />
             <label htmlFor="is_recurring" className="text-sm text-gray-700">
               Recurring monthly subscription
@@ -514,14 +514,14 @@ export function PaymentLinkForm({
           )}
 
           {formData.amount && (
-            <div className="rounded-lg bg-gray-50 p-4">
-              <h4 className="text-sm font-medium text-gray-700">Summary</h4>
+            <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
+              <h4 className="text-sm font-medium text-gray-500">Summary</h4>
               <p className="mt-1 text-lg font-bold text-gray-900">
                 {formatCurrency(parseFloat(formData.amount) || 0)}
                 {formData.is_recurring && '/month'}
               </p>
               {formData.duration_months && formData.is_recurring && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-500">
                   Total: {formatCurrency((parseFloat(formData.amount) || 0) * parseInt(formData.duration_months))} over{' '}
                   {formData.duration_months} months
                 </p>

@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader } from '@/components/ui'
 import { formatCurrency } from '@/lib/utils'
 import { getThisMonth } from '@/lib/dateRanges'
-import { DollarSign, Users, Link } from 'lucide-react'
 import { ActivityFeed, type ActivityItem } from '@/components/dashboard/ActivityFeed'
 
 export default async function DashboardPage() {
@@ -102,61 +101,36 @@ export default async function DashboardPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user.name}
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          Overview
         </h1>
-        <p className="text-gray-600">
-          Here&apos;s what&apos;s happening with your clients today.
-        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-green-100 p-2">
-                <DollarSign className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Revenue (This Month)</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-blue-100 p-2">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Active Clients</p>
-                <p className="text-2xl font-bold text-gray-900">{activeClientsCount || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-yellow-100 p-2">
-                <Link className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Pending Links</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingLinksCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Borderless Stats */}
+      <div className="grid gap-8 md:grid-cols-3">
+        <div>
+          <p className="text-sm font-medium text-gray-500">
+            Revenue <span className="text-gray-400">· This month</span>
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+          <p className="mt-1 text-sm text-gray-400">$0.00 previous period</p>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-500">Active Customers</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{activeClientsCount || 0}</p>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-500">Pending Links</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{pendingLinksCount}</p>
+        </div>
       </div>
 
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold">Recent Activity</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
         </CardHeader>
         <CardContent>
           <ActivityFeed activities={activities} />

@@ -41,16 +41,18 @@
     /reports          → Commission reports
   /(auth)             → Login pages (outside dashboard layout)
   /(dashboard)        → Main app (auth-protected)
-    /clients          → Client management
-    /payments         → Payment history & links
+    /customers        → Customer management
+    /transactions     → Transaction history & pending links
+    /create-link      → Payment link creation
     /reports          → Revenue & commission reports
   /(public)           → Client-facing pages (no auth required)
     /payments         → Success/cancelled pages after checkout
 /components
   /ui                 → Shared components (Button, Input, Card, Modal, SearchableSelect, etc.)
-  /clients            → Client-specific components
+  /customers          → Customer-specific components
   /payments           → Payment-specific components
   /reports            → Report-specific components
+  /dashboard          → Dashboard components (ActivityFeed, DashboardNav)
 /lib
   /supabase.ts        → Supabase client setup
   /stripe.ts          → Stripe client setup

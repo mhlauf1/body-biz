@@ -1,6 +1,6 @@
 import { requireAuth, isAdminOrManager } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
-import { ClientList } from '@/components/clients/ClientList'
+import { ClientList } from '@/components/customers/ClientList'
 
 export default async function ClientsPage() {
   const user = await requireAuth()
@@ -43,11 +43,11 @@ export default async function ClientsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
         <p className="text-gray-600">
           {userIsAdminOrManager
-            ? 'Manage all clients across your team.'
-            : 'Manage your assigned clients.'}
+            ? 'Manage all customers across your team.'
+            : 'Manage your assigned customers.'}
         </p>
       </div>
 

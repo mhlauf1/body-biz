@@ -135,7 +135,7 @@ export function CommissionTable({ initialRange }: CommissionTableProps) {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Spinner className="h-8 w-8 text-indigo-600" />
+              <Spinner className="h-8 w-8 text-gray-400" />
             </div>
           ) : trainers.length === 0 ? (
             <div className="px-6 py-12 text-center text-gray-500">
@@ -143,29 +143,29 @@ export function CommissionTable({ initialRange }: CommissionTableProps) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
                       Trainer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
                       Clients
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">
                       Revenue
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">
                       Their Commission
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500">
                       Kate&apos;s Cut
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {trainers.map((trainer) => (
-                    <tr key={trainer.id} className="hover:bg-gray-50">
+                <tbody>
+                  {trainers.map((trainer, index) => (
+                    <tr key={trainer.id} className={`hover:bg-gray-50 transition-colors ${index !== trainers.length - 1 ? 'border-b border-gray-100' : ''}`}>
                       <td className="whitespace-nowrap px-6 py-4">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-gray-900">
@@ -188,10 +188,10 @@ export function CommissionTable({ initialRange }: CommissionTableProps) {
                       <td className="whitespace-nowrap px-6 py-4 text-right font-medium text-gray-900">
                         {formatCurrency(trainer.revenue)}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-green-600">
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-emerald-600">
                         {formatCurrency(trainer.trainerAmount)}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-indigo-600">
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-gray-600">
                         {trainer.ownerAmount > 0
                           ? formatCurrency(trainer.ownerAmount)
                           : '—'}
@@ -199,8 +199,8 @@ export function CommissionTable({ initialRange }: CommissionTableProps) {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr className="font-semibold">
+                <tfoot>
+                  <tr className="border-t border-gray-200 font-semibold">
                     <td className="whitespace-nowrap px-6 py-4 text-gray-900">
                       Total
                     </td>
@@ -210,10 +210,10 @@ export function CommissionTable({ initialRange }: CommissionTableProps) {
                     <td className="whitespace-nowrap px-6 py-4 text-right text-gray-900">
                       {formatCurrency(totals.revenue)}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-green-600">
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-emerald-600">
                       {formatCurrency(totals.trainerAmount)}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-indigo-600">
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-gray-600">
                       {formatCurrency(totals.ownerAmount)}
                     </td>
                   </tr>

@@ -49,21 +49,24 @@ export function PendingLinksList({ links }: PendingLinksListProps) {
           {links.map((link) => (
             <div
               key={link.id}
-              className="flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50 p-4"
+              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4"
             >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-gray-900">
-                  {link.purchase?.client?.name || 'Unknown Client'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {link.purchase?.program?.name || 'Custom'} –{' '}
-                  {formatCurrency(link.purchase?.amount || 0)}
-                </p>
-                {link.expires_at && (
-                  <p className="text-xs text-gray-500">
-                    Expires {formatRelativeTime(new Date(link.expires_at))}
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-amber-400" />
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {link.purchase?.client?.name || 'Unknown Client'}
                   </p>
-                )}
+                  <p className="text-sm text-gray-600">
+                    {link.purchase?.program?.name || 'Custom'} –{' '}
+                    {formatCurrency(link.purchase?.amount || 0)}
+                  </p>
+                  {link.expires_at && (
+                    <p className="text-xs text-gray-500">
+                      Expires {formatRelativeTime(new Date(link.expires_at))}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="ml-4 flex shrink-0 gap-2">
                 <Button
@@ -73,7 +76,7 @@ export function PendingLinksList({ links }: PendingLinksListProps) {
                   title="Copy link"
                 >
                   {copiedId === link.id ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-emerald-600" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}

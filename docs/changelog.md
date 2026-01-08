@@ -16,6 +16,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.0] - 2026-01-07
+
+### Changed
+- **UI Terminology Refactor**: Renamed "Clients" to "Customers" and "Payments" to "Transactions" throughout the app
+- **Route Restructuring**:
+  - `/clients` → `/customers`
+  - `/clients/[id]` → `/customers/[id]`
+  - `/clients/new` → `/customers/new`
+  - `/payments` → `/transactions`
+  - `/payments/new` → `/create-link` (now top-level route for easier access)
+- **Color Scheme Update**: UI components updated from indigo to neutral gray palette for cleaner Stripe-like aesthetic
+  - Primary buttons: indigo-600 → gray-900
+  - Secondary buttons: border-gray-300 → border-gray-200
+  - Ghost buttons: Updated text and hover colors
+- **Navigation**: Dashboard sidebar reflects new route names (Transactions, Customers, Create Link)
+
+### Technical
+- Components moved from `components/clients/` to `components/customers/`
+- All internal links updated to use new `/customers` and `/transactions` routes
+- Badge, Button, Card, Input, Select components updated with refined styling
+
+---
+
 ## [0.6.0] - 2026-01-07
 
 ### Added

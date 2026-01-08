@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui'
 import { formatCurrency } from '@/lib/utils'
 import { getThisMonth } from '@/lib/dateRanges'
 import { ActivityFeed, type ActivityItem } from '@/components/dashboard/ActivityFeed'
+import { QuickActions } from '@/components/dashboard/QuickActions'
 
 export default async function DashboardPage() {
   const user = await requireAuth()
@@ -57,7 +58,19 @@ export default async function DashboardPage() {
     ).length
   }
 
-  // Query 4: Recent Activity (purchases)
+  // Query 4: Failed Payments Count
+  let failedQuery = supabase
+    .from('purchases')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'failed')
+
+  if (!userIsAdminOrManager) {
+    failedQuery = failedQuery.eq('trainer_id', user.id)
+  }
+
+  const { count: failedPaymentsCount } = await failedQuery
+
+  // Query 5: Recent Activity (purchases)
   let activityQuery = supabase
     .from('purchases')
     .select(`
@@ -125,6 +138,12 @@ export default async function DashboardPage() {
           <p className="text-sm font-medium text-gray-500">Pending Links</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">{pendingLinksCount}</p>
         </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <QuickActions failedPaymentsCount={failedPaymentsCount || 0} />
       </div>
 
       {/* Recent Activity */}

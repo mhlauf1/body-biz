@@ -7,12 +7,22 @@ export default async function ClientsPage() {
   const supabase = await createClient()
   const userIsAdminOrManager = isAdminOrManager(user)
 
-  // Build query based on role
+  // Build query based on role - include purchases with program info
   let query = supabase
     .from('clients')
     .select(`
       *,
-      assigned_trainer:users!clients_assigned_trainer_id_fkey(id, name, email)
+      assigned_trainer:users!clients_assigned_trainer_id_fkey(id, name, email),
+      purchases(
+        id,
+        amount,
+        status,
+        is_recurring,
+        duration_months,
+        stripe_subscription_id,
+        created_at,
+        program:programs(id, name)
+      )
     `)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -27,6 +37,32 @@ export default async function ClientsPage() {
   if (error) {
     console.error('Error fetching clients:', error)
   }
+
+  // Process clients to add subscription info
+  const processedClients = clients?.map(client => {
+    const purchases = client.purchases || []
+    const sortedPurchases = [...purchases].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+
+    const activePurchase = sortedPurchases.find(p => p.status === 'active')
+    const pausedPurchase = sortedPurchases.find(p => p.status === 'paused')
+    const failedPurchase = sortedPurchases.find(p => p.status === 'failed')
+
+    const latestPurchase = activePurchase || pausedPurchase || failedPurchase || sortedPurchases[0] || null
+
+    let subscriptionStatus: 'active' | 'paused' | 'failed' | 'none' = 'none'
+    if (activePurchase) subscriptionStatus = 'active'
+    else if (pausedPurchase) subscriptionStatus = 'paused'
+    else if (failedPurchase) subscriptionStatus = 'failed'
+
+    return {
+      ...client,
+      purchases: undefined,
+      latest_purchase: latestPurchase,
+      subscription_status: subscriptionStatus,
+    }
+  }) || []
 
   // Get trainers for filter dropdown (admin/manager only)
   let trainers: { id: string; name: string }[] = []
@@ -52,7 +88,7 @@ export default async function ClientsPage() {
       </div>
 
       <ClientList
-        initialClients={clients || []}
+        initialClients={processedClients}
         trainers={trainers}
         isAdminOrManager={userIsAdminOrManager}
       />

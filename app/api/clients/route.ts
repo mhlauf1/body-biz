@@ -15,6 +15,7 @@ const createClientSchema = z.object({
 /**
  * GET /api/clients
  * List all clients (filtered by role - trainers only see their own)
+ * Includes latest purchase/subscription info for each client
  */
 export async function GET(request: Request) {
   try {
@@ -27,12 +28,23 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const trainerId = searchParams.get('trainer_id')
+    const statusFilter = searchParams.get('status') // active, paused, failed, none
 
     let query = supabase
       .from('clients')
       .select(`
         *,
-        assigned_trainer:users!clients_assigned_trainer_id_fkey(id, name, email)
+        assigned_trainer:users!clients_assigned_trainer_id_fkey(id, name, email),
+        purchases(
+          id,
+          amount,
+          status,
+          is_recurring,
+          duration_months,
+          stripe_subscription_id,
+          created_at,
+          program:programs(id, name)
+        )
       `)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
@@ -57,7 +69,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
     }
 
-    return NextResponse.json({ clients })
+    // Process clients to add latest_purchase and subscription_status
+    const processedClients = clients?.map(client => {
+      // Get all purchases sorted by created_at desc
+      const purchases = client.purchases || []
+      const sortedPurchases = [...purchases].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+
+      // Find the most relevant purchase (active > paused > failed > others)
+      const activePurchase = sortedPurchases.find(p => p.status === 'active')
+      const pausedPurchase = sortedPurchases.find(p => p.status === 'paused')
+      const failedPurchase = sortedPurchases.find(p => p.status === 'failed')
+
+      const latestPurchase = activePurchase || pausedPurchase || failedPurchase || sortedPurchases[0] || null
+
+      // Determine subscription status
+      let subscriptionStatus: 'active' | 'paused' | 'failed' | 'none' = 'none'
+      if (activePurchase) subscriptionStatus = 'active'
+      else if (pausedPurchase) subscriptionStatus = 'paused'
+      else if (failedPurchase) subscriptionStatus = 'failed'
+
+      return {
+        ...client,
+        purchases: undefined, // Remove full purchases array from response
+        latest_purchase: latestPurchase,
+        subscription_status: subscriptionStatus,
+      }
+    }) || []
+
+    // Filter by subscription status if requested
+    let filteredClients = processedClients
+    if (statusFilter && ['active', 'paused', 'failed', 'none'].includes(statusFilter)) {
+      filteredClients = processedClients.filter(c => c.subscription_status === statusFilter)
+    }
+
+    return NextResponse.json({ clients: filteredClients })
   } catch (error) {
     console.error('Error in GET /api/clients:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

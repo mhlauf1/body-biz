@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
+  Link as LinkIcon,
 } from 'lucide-react'
 import type { User } from '@/types'
 
@@ -28,8 +29,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Clients', href: '/clients', icon: Users },
-    { name: 'Payments', href: '/payments', icon: CreditCard },
+    { name: 'Transactions', href: '/transactions', icon: CreditCard },
+    { name: 'Customers', href: '/customers', icon: Users },
+    { name: 'Create Link', href: '/create-link', icon: LinkIcon },
     ...(isAdminOrManager
       ? [
           { name: 'Reports', href: '/reports', icon: BarChart3 },
@@ -46,9 +48,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
   }
 
   return (
-    <nav className="flex w-64 flex-col border-r border-gray-200 bg-white">
-      <div className="flex h-16 items-center border-b border-gray-200 px-6">
-        <span className="text-xl font-bold text-gray-900">Body Biz</span>
+    <nav className="flex w-64 flex-col bg-white shadow-sm">
+      <div className="flex h-16 items-center border-b border-gray-100 px-6">
+        <span className="text-lg font-semibold tracking-tight text-gray-900">Body Biz</span>
       </div>
 
       <div className="flex flex-1 flex-col justify-between p-4">
@@ -64,8 +66,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-indigo-50 text-indigo-600'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -76,14 +78,14 @@ export function DashboardNav({ user }: DashboardNavProps) {
           })}
         </ul>
 
-        <div className="border-t border-gray-200 pt-4">
-          <div className="mb-4 px-3">
+        <div className="border-t border-gray-100 pt-4">
+          <div className="mb-3 px-3">
             <p className="text-sm font-medium text-gray-900">{user.name}</p>
             <p className="text-xs capitalize text-gray-500">{user.role}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 hover:bg-gray-50"
           >
             <LogOut className="h-5 w-5" />
             Sign Out

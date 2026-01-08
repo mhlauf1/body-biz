@@ -2,8 +2,8 @@ import { requireAuth, isAdminOrManager } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ClientCard } from '@/components/clients/ClientCard'
-import { ClientQuickActions } from '@/components/clients/ClientQuickActions'
+import { ClientCard } from '@/components/customers/ClientCard'
+import { ClientQuickActions } from '@/components/customers/ClientQuickActions'
 import { Card, CardContent, CardHeader, Badge } from '@/components/ui'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
@@ -88,11 +88,11 @@ export default async function ClientProfilePage({ params }: PageParams) {
     <div className="space-y-6">
       {/* Back Link */}
       <Link
-        href="/clients"
+        href="/customers"
         className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Clients
+        Back to Customers
       </Link>
 
       {/* Client Info Card */}

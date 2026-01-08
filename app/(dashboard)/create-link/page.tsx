@@ -1,18 +1,16 @@
 import { requireAuth, isAdminOrManager } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { PaymentLinkForm } from '@/components/payments/PaymentLinkForm'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 
 type PageProps = {
-  searchParams: Promise<{ client_id?: string }>
+  searchParams: Promise<{ customer_id?: string }>
 }
 
-export default async function NewPaymentLinkPage({ searchParams }: PageProps) {
+export default async function CreateLinkPage({ searchParams }: PageProps) {
   const user = await requireAuth()
   const supabase = await createClient()
   const userIsAdminOrManager = isAdminOrManager(user)
-  const { client_id } = await searchParams
+  const { customer_id } = await searchParams
 
   // Build client query based on role
   let clientQuery = supabase
@@ -47,20 +45,10 @@ export default async function NewPaymentLinkPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/payments"
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Payments
-        </Link>
-      </div>
-
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Create Payment Link</h1>
         <p className="text-gray-600">
-          Generate a payment link to send to your client.
+          Generate a payment link to send to your customer.
         </p>
       </div>
 
@@ -70,7 +58,7 @@ export default async function NewPaymentLinkPage({ searchParams }: PageProps) {
         programs={programs || []}
         currentUser={user}
         isAdminOrManager={userIsAdminOrManager}
-        preselectedClientId={client_id}
+        preselectedClientId={customer_id}
       />
     </div>
   )

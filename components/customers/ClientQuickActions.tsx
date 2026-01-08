@@ -102,14 +102,14 @@ export function ClientQuickActions({ client, programs, pendingLink }: ClientQuic
                 New Charge
               </Button>
             ) : (
-              <Link href={`/payments/new?client_id=${client.id}`}>
+              <Link href={`/create-link?customer_id=${client.id}`}>
                 <Button>
                   <LinkIcon className="mr-2 h-4 w-4" />
                   Send Payment Link
                 </Button>
               </Link>
             )}
-            <Link href={`/payments/new?client_id=${client.id}`}>
+            <Link href={`/create-link?customer_id=${client.id}`}>
               <Button variant="secondary">
                 <LinkIcon className="mr-2 h-4 w-4" />
                 Create Payment Link

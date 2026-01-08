@@ -196,13 +196,14 @@ Staff                    Next.js                   Stripe                    Sup
 /(dashboard)
 ├── layout.tsx          # Auth guard, sidebar navigation
 ├── page.tsx            # Dashboard home (stats, activity)
-├── /clients
-│   ├── page.tsx        # Client list with search/filter
-│   ├── [id]/page.tsx   # Client profile
-│   └── new/page.tsx    # Add client form
-├── /payments
-│   ├── page.tsx        # Payment history + pending links
-│   └── new/page.tsx    # Create payment link
+├── /customers
+│   ├── page.tsx        # Customer list with search/filter
+│   ├── [id]/page.tsx   # Customer profile
+│   └── new/page.tsx    # Add customer form
+├── /transactions
+│   └── page.tsx        # Transaction history + pending links
+├── /create-link
+│   └── page.tsx        # Create payment link
 └── /reports
     └── page.tsx        # Revenue & commission reports
 

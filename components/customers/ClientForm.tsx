@@ -127,8 +127,8 @@ export function ClientForm({
         return
       }
 
-      // Redirect to client profile or list
-      router.push(mode === 'create' ? `/clients/${data.client.id}` : `/clients/${client?.id}`)
+      // Redirect to customer profile or list
+      router.push(mode === 'create' ? `/customers/${data.client.id}` : `/customers/${client?.id}`)
       router.refresh()
     } catch (error) {
       console.error('Error submitting form:', error)
@@ -165,8 +165,8 @@ export function ClientForm({
                   <p className="text-red-700 font-medium">{serverError.message}</p>
                   {serverError.type === 'duplicate_email' && (
                     <p className="mt-1 text-red-600">
-                      <Link href={`/clients?search=${encodeURIComponent(formData.email)}`} className="underline hover:no-underline">
-                        Search for existing client
+                      <Link href={`/customers?search=${encodeURIComponent(formData.email)}`} className="underline hover:no-underline">
+                        Search for existing customer
                       </Link>
                     </p>
                   )}

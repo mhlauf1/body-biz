@@ -1,12 +1,11 @@
 import { requireAuth, isAdminOrManager } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Button, Card, CardContent, CardHeader, Badge } from '@/components/ui'
+import { Card, CardContent, CardHeader, Badge } from '@/components/ui'
 import { PendingLinksList } from '@/components/payments/PendingLinksList'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Plus } from 'lucide-react'
 
-export default async function PaymentsPage() {
+export default async function TransactionsPage() {
   const user = await requireAuth()
   const supabase = await createClient()
   const userIsAdminOrManager = isAdminOrManager(user)
@@ -64,21 +63,13 @@ export default async function PaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-          <p className="text-gray-600">
-            {userIsAdminOrManager
-              ? 'View all transactions and manage payment links.'
-              : 'View your transactions and payment links.'}
-          </p>
-        </div>
-        <Link href="/payments/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Payment Link
-          </Button>
-        </Link>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
+        <p className="text-gray-600">
+          {userIsAdminOrManager
+            ? 'View all transactions and pending payment links.'
+            : 'View your transactions and pending payment links.'}
+        </p>
       </div>
 
       {/* Pending Links */}
@@ -101,7 +92,7 @@ export default async function PaymentsPage() {
                       Date
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Client
+                      Customer
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Program
@@ -127,7 +118,7 @@ export default async function PaymentsPage() {
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
                         <Link
-                          href={`/clients/${purchase.client?.id}`}
+                          href={`/customers/${purchase.client?.id}`}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
                         >
                           {purchase.client?.name || 'Unknown'}

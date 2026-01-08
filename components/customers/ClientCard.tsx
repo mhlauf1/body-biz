@@ -38,7 +38,7 @@ export function ClientCard({
       })
 
       if (response.ok) {
-        router.push('/clients')
+        router.push('/customers')
         router.refresh()
       }
     } catch (error) {

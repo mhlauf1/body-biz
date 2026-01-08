@@ -290,8 +290,17 @@ const event = stripe.webhooks.constructEvent(
 | `/api/webhooks/stripe` | POST | Handle Stripe events |
 | `/api/clients` | GET, POST | List/create clients |
 | `/api/clients/[id]` | GET, PATCH, DELETE | Single client operations |
-| `/api/payments/create-link` | POST | Create Stripe Checkout session |
+| `/api/payments/checkout` | POST | Create Stripe Checkout session |
 | `/api/payments/charge` | POST | Charge saved payment method |
+| `/api/payments/retry` | POST | Retry failed payment |
+| `/api/programs` | GET, POST | List/create programs |
+| `/api/programs/[id]` | GET, PATCH, DELETE | Program operations |
+| `/api/team` | GET, POST | List/create team members |
+| `/api/team/[id]` | GET, PATCH, DELETE | Team member operations |
+| `/api/subscriptions/[id]/pause` | POST | Pause subscription |
+| `/api/subscriptions/[id]/resume` | POST | Resume subscription |
+| `/api/subscriptions/[id]/cancel` | POST | Cancel subscription |
+| `/api/reports/commissions` | GET | Get commission report data |
 
 ---
 
@@ -331,4 +340,4 @@ const event = stripe.webhooks.constructEvent(
 
 ---
 
-*Last updated: 2026-01-07*
+*Last updated: 2026-01-08*

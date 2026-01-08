@@ -8,11 +8,96 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Planned
-- Team management page
-- Program management page
-- Failed payment handling UI
-- Subscription pause/resume/cancel
+_No pending changes_
+
+---
+
+## [0.9.0] - 2026-01-08
+
+### Added
+- **Program Management (Milestone 5 Complete)**
+  - Programs list page (`/programs`) with search and filter
+  - Add program page (`/programs/new`)
+  - Edit program page (`/programs/[id]`)
+  - Program type badges (Main/Add-on)
+  - Recurring vs one-time indicator
+  - Soft delete (deactivate) programs
+
+- **Failed Payment Handling**
+  - `FailedPaymentAlert` component with retry functionality
+  - `/api/payments/retry` endpoint to retry failed invoice payments
+  - Visual warning on customer profiles for failed payments
+  - "View Failed Payments" quick action on dashboard
+  - Filter customers by failed payment status
+
+- **Subscription Management**
+  - Pause/Resume/Cancel buttons on active subscriptions
+  - `/api/subscriptions/[id]/pause` - Pause billing
+  - `/api/subscriptions/[id]/resume` - Resume paused subscription
+  - `/api/subscriptions/[id]/cancel` - Cancel with confirmation modal
+  - Confirmation dialogs for destructive actions
+  - Audit logging for all subscription actions
+
+- **Dashboard Quick Actions**
+  - New `QuickActions` component with common tasks grid
+  - Failed payment count indicator (warning state)
+  - Links to: Charge Customer, Create Link, Failed Payments, Add Customer, Reports
+
+- **API Routes**
+  - `GET/POST /api/programs` - List and create programs
+  - `GET/PATCH/DELETE /api/programs/[id]` - Program CRUD operations
+  - `POST /api/payments/retry` - Retry failed payments
+  - `POST /api/subscriptions/[id]/pause` - Pause subscription
+  - `POST /api/subscriptions/[id]/resume` - Resume subscription
+  - `POST /api/subscriptions/[id]/cancel` - Cancel subscription
+
+- **UI Components**
+  - `ProgramList` - Searchable/filterable programs table
+  - `ProgramForm` - Create/edit form with type checkboxes
+  - `FailedPaymentAlert` - Alert banner with retry button
+  - `SubscriptionActions` - Pause/Resume/Cancel buttons
+  - `QuickActions` - Dashboard quick action cards
+
+### Changed
+- Customer list now supports filtering by payment status (failed)
+- Dashboard now displays failed payment count in quick actions
+
+### Technical
+- All new API routes include Zod validation
+- Audit logging for program and subscription operations
+- Role-based access control (admin/manager only for programs)
+- Soft delete pattern for program deactivation
+
+---
+
+## [0.8.0] - 2026-01-07
+
+### Added
+- **Team Management (Milestone 5)**
+  - Team list page (`/team`) with search and role filter
+  - Add team member page (`/team/new`) with Supabase Auth integration
+  - Team member profile page (`/team/[id]`) with edit form
+  - Role badges (Admin, Manager, Trainer) with color coding
+  - Commission rate management per team member
+  - Customer count and active revenue stats per member
+  - Deactivate/reactivate team members (soft delete)
+  - Recent activity feed showing trainer's purchases
+
+- **API Routes**
+  - `GET/POST /api/team` - List and create team members
+  - `GET/PATCH/DELETE /api/team/[id]` - Team member operations
+
+- **UI Components**
+  - `TeamList` - Searchable/filterable team member table
+  - `TeamMemberForm` - Create/edit form with commission rate
+  - `TeamMemberCard` - Profile card with stats and actions
+
+### Technical
+- New team members created via Supabase Admin API (auth + public.users)
+- Email field disabled on edit (cannot change after creation)
+- Commission rate auto-defaults based on role (100% admin, 70% others)
+- Role-based access control (admin/manager only)
+- Audit logging for all team member operations
 
 ---
 

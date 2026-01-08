@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-**Milestone 5: Polish** (In Progress) - UI Refactor Complete
+**Milestone 5: Polish** - COMPLETE
 
 ## Overall Progress
 
@@ -12,7 +12,7 @@ Milestone 1: Foundation       [==========] 100% ✓
 Milestone 2: Payment Links    [==========] 100% ✓
 Milestone 3: Recharge         [==========] 100% ✓
 Milestone 4: Reports          [==========] 100% ✓
-Milestone 5: Polish           [=========-] 85%
+Milestone 5: Polish           [==========] 100% ✓
 ```
 
 ---
@@ -143,26 +143,27 @@ Milestone 5: Polish           [=========-] 85%
 
 ### Milestone 5: Polish & Secondary Features
 
-**Status:** In Progress (~85%)
+**Status:** Complete
 
-| Task                              | Status  |
-| --------------------------------- | ------- |
-| Payment link form UX improvements | Done    |
-| Searchable client selector        | Done    |
-| Inline new client creation        | Done    |
-| Pending links visibility          | Done    |
-| Public payment success/cancelled  | Done    |
-| Login validation improvements     | Done    |
-| Testing documentation             | Done    |
-| Dashboard home with stats         | Done    |
-| Recent activity feed              | Done    |
-| Email confirmations (Resend)      | Done    |
-| UI terminology refactor           | Done    |
-| UI color scheme update            | Done    |
-| Team management                   | Pending |
-| Program management                | Pending |
-| Handle failed payments            | Pending |
-| Pause/resume/cancel subscriptions | Pending |
+| Task                              | Status |
+| --------------------------------- | ------ |
+| Payment link form UX improvements | Done   |
+| Searchable client selector        | Done   |
+| Inline new client creation        | Done   |
+| Pending links visibility          | Done   |
+| Public payment success/cancelled  | Done   |
+| Login validation improvements     | Done   |
+| Testing documentation             | Done   |
+| Dashboard home with stats         | Done   |
+| Recent activity feed              | Done   |
+| Email confirmations (Resend)      | Done   |
+| UI terminology refactor           | Done   |
+| UI color scheme update            | Done   |
+| Team management                   | Done   |
+| Program management                | Done   |
+| Handle failed payments            | Done   |
+| Pause/resume/cancel subscriptions | Done   |
+| Dashboard quick actions           | Done   |
 
 **New files created:**
 
@@ -175,6 +176,27 @@ Milestone 5: Polish           [=========-] 85%
 - `scripts/set-user-passwords.js` - Test user password helper
 - `components/dashboard/ActivityFeed.tsx` - Dashboard activity feed component
 - `lib/email.ts` - Resend email client and templates
+- `app/api/team/route.ts` - Team members list and create API
+- `app/api/team/[id]/route.ts` - Team member CRUD API
+- `app/(dashboard)/team/page.tsx` - Team list page
+- `app/(dashboard)/team/new/page.tsx` - Add team member page
+- `app/(dashboard)/team/[id]/page.tsx` - Team member profile/edit page
+- `components/team/TeamList.tsx` - Team list with search/filter
+- `components/team/TeamMemberForm.tsx` - Team member create/edit form
+- `components/team/TeamMemberCard.tsx` - Team member profile card
+- `app/(dashboard)/programs/page.tsx` - Programs list page
+- `app/(dashboard)/programs/new/page.tsx` - Add program page
+- `app/(dashboard)/programs/[id]/page.tsx` - Edit program page
+- `app/api/programs/[id]/route.ts` - Program CRUD API
+- `app/api/payments/retry/route.ts` - Retry failed payment API
+- `app/api/subscriptions/[id]/pause/route.ts` - Pause subscription API
+- `app/api/subscriptions/[id]/resume/route.ts` - Resume subscription API
+- `app/api/subscriptions/[id]/cancel/route.ts` - Cancel subscription API
+- `components/programs/ProgramList.tsx` - Programs list with search/filter
+- `components/programs/ProgramForm.tsx` - Program create/edit form
+- `components/customers/FailedPaymentAlert.tsx` - Failed payment alert with retry
+- `components/customers/SubscriptionActions.tsx` - Pause/Resume/Cancel buttons
+- `components/dashboard/QuickActions.tsx` - Dashboard quick action cards
 
 **Files significantly updated:**
 
@@ -204,13 +226,39 @@ Milestone 5: Polish           [=========-] 85%
 | Milestone 2 completed      | 2026-01-07 |
 | Milestone 3 completed      | 2026-01-07 |
 | Milestone 4 completed      | 2026-01-07 |
-| MVP complete (Milestone 5) | TBD        |
+| MVP complete (Milestone 5) | 2026-01-08 |
 
 ---
 
-## Latest Work: UI Refactor & Terminology Update
+## Latest Work: Milestone 5 Completion
 
 ### What Was Built
+
+**Program Management** - Complete CRUD for service offerings:
+- Programs list page (`/programs`) with search and inactive toggle
+- Add/Edit program forms with validation
+- Program type badges (Main/Add-on) and recurring indicators
+- Soft delete (deactivate) programs
+
+**Failed Payment Handling**:
+- Failed payment alert component on customer profiles
+- Retry payment API to re-attempt failed invoices
+- Dashboard quick action showing failed payment count
+- Customer list filtering by failed status
+
+**Subscription Management**:
+- Pause subscription (Stripe pause_collection)
+- Resume paused subscription
+- Cancel subscription with confirmation modal
+- All actions logged to audit_log
+
+**Dashboard Quick Actions**:
+- Grid of common actions for quick access
+- Visual warning indicator for failed payments
+
+---
+
+## Previous Work: UI Refactor & Terminology Update
 
 Major UI overhaul to improve consistency and user experience:
 
@@ -270,22 +318,27 @@ The payment link form (`/payments/new`) received a complete UX overhaul:
 
 ---
 
-## What's Next: Remaining Milestone 5 Work
+## What's Next: Post-MVP Enhancements
 
-Priority items still pending:
+All Milestone 5 features are complete. Future enhancements to consider:
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| Failed Payment Handling | UI to show failed payments, retry options | Medium |
-| Team Management | `/team` page to add/edit trainers | Medium |
-| Program Management | `/programs` page to add/edit programs | Medium |
-| Subscription Actions | Pause/resume/cancel buttons | Low |
+| Client Portal | Self-service portal for clients to view/update payment methods | Low |
+| Advanced Reporting | Export to PDF, scheduled email reports | Low |
+| Stripe Customer Portal | Link to Stripe-hosted billing management | Low |
+| Bulk Operations | Bulk email/charge multiple clients | Low |
 
-### Recently Completed
+### Recently Completed (Milestone 5)
 
+- **Program Management** - Full CRUD for service offerings
+- **Failed Payment Handling** - Alerts, retry functionality, filtering
+- **Subscription Actions** - Pause/Resume/Cancel with audit logging
+- **Dashboard Quick Actions** - Common tasks grid with warnings
+- **Team Management** - Full CRUD for trainers with Supabase Auth
 - **Dashboard Stats** - Real-time stats with role-based filtering
-- **Activity Feed** - Recent purchases with status icons and relative timestamps
-- **Email Confirmations** - Welcome/receipt emails via Resend on checkout
+- **Activity Feed** - Recent purchases with status icons
+- **Email Confirmations** - Welcome/receipt emails via Resend
 
 ---
 
@@ -404,4 +457,4 @@ Use `scripts/set-user-passwords.js` to reset test user passwords if needed.
 
 ---
 
-_Last updated: 2026-01-07 (M5 Polish ~85%, UI refactor complete)_
+_Last updated: 2026-01-08 (Milestone 5 Complete - MVP Ready)_
